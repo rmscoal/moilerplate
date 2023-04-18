@@ -10,9 +10,9 @@ type UserCredential struct {
 	Password string
 }
 
-func (v *UserCredential) Validate() error {
+func (v UserCredential) Validate() error {
 	return validation.ValidateStruct(&v,
-		validation.Field(&v.Username, validation.Required, validation.Length(8, 20)),
+		validation.Field(&v.Username, validation.Required, validation.Length(3, 20)),
 		validation.Field(&v.Password, validation.Required),
 	)
 }

@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 )
 
@@ -17,9 +18,9 @@ type User struct {
 	Credential  vo.UserCredential
 }
 
-func (v *User) ValidateWithContext(ctx context.Context) error {
+func (v User) ValidateWithContext(ctx context.Context) error {
 	if err := validation.ValidateStructWithContext(ctx, &v,
-		validation.Field(&v.Id, validation.Required),
+		validation.Field(&v.Id, validation.When(v.Id != "", validation.Required, is.UUIDv4)),
 		validation.Field(&v.FirstName, validation.Required, validation.Length(3, 20)),
 		validation.Field(&v.LastName, validation.Required, validation.Length(3, 25)),
 		validation.Field(&v.Credential),
