@@ -1,0 +1,16 @@
+# Environments
+*.yaml
+*.env
+
+# Workspace configuration
+.vscode
+
+# Log files
+logs/*
+
+# Packages
+go.sum
+
+# air hot reload
+tmp
+
