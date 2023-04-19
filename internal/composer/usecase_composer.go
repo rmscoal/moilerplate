@@ -18,5 +18,5 @@ func NewUseCaseComposer(repo IRepoComposer, service IServiceComposer) IUseCaseCo
 }
 
 func (c *useCaseComposer) CredentialUseCase() usecase.ICredentialUseCase {
-	return usecase.NewCredentialUseCase(c.repo.CredentialRepo())
+	return usecase.NewCredentialUseCase(c.repo.CredentialRepo(), c.service.DoorkeeperService())
 }
