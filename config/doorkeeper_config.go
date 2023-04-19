@@ -1,8 +1,12 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -13,6 +17,9 @@ type doorkeeperConfig struct {
 	secretKey     string
 	signingMethod string
 	signSize      string
+
+	Duration    time.Duration
+	DurationStr string
 }
 
 // newServerConfig method    has a Config receiver
@@ -20,10 +27,12 @@ type doorkeeperConfig struct {
 // Config.
 func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
+		DurationStr: strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
+
 		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
-		hashMethod:    os.Getenv("DOORKEEPER_HASH_METHOD"),
+		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
-		signingMethod: os.Getenv("DOORKEEPER_SIGNING_METHOD"),
+		signingMethod: strings.ToUpper(os.Getenv("DOORKEEPER_SIGNING_METHOD")),
 		signSize:      os.Getenv("DOORKEEPER_SIGN_SIZE"),
 	}
 
@@ -31,6 +40,7 @@ func (c *Config) newDoorkeeperConfig() {
 		log.Fatalf("FATAL - %s", err)
 	}
 
+	d.Duration = d.parseTime()
 	c.Doorkeeper = d
 }
 
@@ -55,7 +65,46 @@ func (d doorkeeperConfig) validate() error {
 			Error("Please provide hash method in the environment. This is needed when hashing credentials"),
 			validation.In("MD4", "MD5", "SHA1", "SHA224", "SHA256",
 				"SHA384", "SHA512", "SHA3_224", "SHA3_256", "SHA3_384", "SHA3_512")),
+		validation.Field(&d.Duration, validation.When(d.DurationStr != "",
+			validation.By(
+				func(value interface{}) error {
+					timeSlc := strings.Split(value.(string), " ")
+					// Checks length
+					if len(timeSlc) != 2 {
+						return fmt.Errorf("required length is 2 but got %d", len(timeSlc))
+					}
+					// Checks time meter
+					if err := validation.Validate(&timeSlc[0],
+						validation.In("second", "seconds", "minute", "minutes", "hour", "hours").
+							Error("invalid time meter option")); err != nil {
+						return err
+					}
+					// Check time value
+					_, err := strconv.Atoi(timeSlc[1])
+					if err != nil {
+						return err
+					}
+					return nil
+				},
+			))),
 	)
+}
+
+func (d doorkeeperConfig) parseTime() time.Duration {
+	var res time.Duration
+	timeSlc := strings.Split(d.DurationStr, " ")
+	switch timeSlc[1] {
+	case "second", "seconds":
+		res = time.Second
+	case "minute", "minutes":
+		res = time.Minute
+	case "hour", "hours":
+		res = time.Hour
+	}
+	// Check time value
+	val, _ := strconv.Atoi(timeSlc[1])
+	res = time.Duration(val) * res
+	return res
 }
 
 func (d *doorkeeperConfig) HashSalt() string {
