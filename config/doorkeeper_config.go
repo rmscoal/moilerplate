@@ -27,8 +27,7 @@ type doorkeeperConfig struct {
 // Config.
 func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
-		DurationStr: strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
-
+		DurationStr:   strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
 		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
 		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
@@ -40,7 +39,9 @@ func (c *Config) newDoorkeeperConfig() {
 		log.Fatalf("FATAL - %s", err)
 	}
 
-	d.Duration = d.parseTime()
+	if d.DurationStr != "" {
+		d.Duration = d.parseTime()
+	}
 	c.Doorkeeper = d
 }
 
@@ -51,9 +52,11 @@ func (d doorkeeperConfig) validate() error {
 		validation.Field(&d.hashSalt, validation.Required.
 			Error("Please provide a hash salt in the environment. This is needed when hashing credentials"),
 			validation.Length(20, 10000)),
-		validation.Field(&d.secretKey, validation.Required.
-			Error("Please provide a secret key in the environment. This is needed for signing authorization tokens"),
-			validation.Length(20, 10000)),
+		validation.Field(&d.secretKey,
+			validation.When(d.signingMethod == "RSA", validation.Skip).Else(
+				validation.Required.
+					Error("Please provide a secret key in the environment. This is needed for signing authorization tokens"),
+				validation.Length(20, 10000))),
 		validation.Field(&d.signingMethod, validation.Required.
 			Error("Please provide a signing method in the environment. This is needed for signing authorization tokens"),
 			validation.In("HMAC", "RSA", "ECDSA", "RSA-PSS", "EdDSA")),
