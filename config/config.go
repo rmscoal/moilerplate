@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Server serverConfig
-	Db     dbConfig
-	App    appConfig
+	Server     serverConfig
+	Db         dbConfig
+	App        appConfig
+	Doorkeeper doorkeeperConfig
 }
 
 var (
@@ -49,6 +50,7 @@ func (c *Config) load() {
 	c.newServerConfig()
 	c.newDbConfig()
 	c.newAppConfig()
+	c.newDoorkeeperConfig()
 }
 
 // printInfo function    prints the entire configuration info
