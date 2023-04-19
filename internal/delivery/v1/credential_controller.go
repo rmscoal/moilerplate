@@ -36,11 +36,11 @@ func (controller *CredentialController) signupHandler(c *gin.Context) {
 	}
 
 	dto := mapper.SignUpRequestToUserDomain(raw)
-	data, err := controller.uc.SignUp(c.Request.Context(), dto)
+	user, err := controller.uc.SignUp(c.Request.Context(), dto)
 	if err != nil {
 		controller.UnexpectedError(c, err)
 		return
 	}
 
-	controller.Ok(c, data)
+	controller.Created(c, mapper.UserDomainToSignUpResponse(user))
 }
