@@ -8,25 +8,37 @@ import (
 
 type BaseControllerV1 struct{}
 
+type Data struct {
+	ApiVersion string `json:"apiVersion,omitempty"`
+	Status     string `json:"status,omitempty"`
+	Data       any    `json:"data,omitempty"`
+	Paging     any    `json:"paging,omitempty"`
+}
+
+type Error struct {
+	ApiVersion string `json:"apiVersion,omitempty"`
+	Error      any    `json:"error,omitempty"`
+}
+
 func (bc BaseControllerV1) jsonErrResponse(c *gin.Context, code int, err any) {
-	c.AbortWithStatusJSON(code, gin.H{
-		"apiVersion": "1.0",
-		"error":      err,
+	c.AbortWithStatusJSON(code, Error{
+		ApiVersion: "1.0",
+		Error:      err,
 	})
 }
 
 func (bc BaseControllerV1) Ok(c *gin.Context, obj ...any) {
 	if len(obj) == 0 {
-		c.JSON(http.StatusOK, gin.H{
-			"apiVersion": "1.0",
-			"status":     "OK",
+		c.JSON(http.StatusOK, Data{
+			ApiVersion: "1.0",
+			Status:     "OK",
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"apiVersion": "1.0",
-		"status":     "OK",
-		"data":       obj[0],
+	c.JSON(http.StatusOK, Data{
+		ApiVersion: "1.0",
+		Status:     "OK",
+		Data:       obj[0],
 	})
 }
 
@@ -39,26 +51,26 @@ func (bc BaseControllerV1) OkWithPage(c *gin.Context, obj ...any) {
 		bc.Ok(c, obj)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"apiVersion": "1.0",
-		"status":     "OK",
-		"data":       obj[0],
-		"paging":     obj[1],
+	c.JSON(http.StatusOK, Data{
+		ApiVersion: "1.0",
+		Status:     "OK",
+		Data:       obj[0],
+		Paging:     obj[1],
 	})
 }
 
 func (bc BaseControllerV1) Created(c *gin.Context, obj ...any) {
 	if len(obj) == 0 {
-		c.JSON(http.StatusCreated, gin.H{
-			"apiVersion": "1.0",
-			"status":     "OK",
+		c.JSON(http.StatusCreated, Data{
+			ApiVersion: "1.0",
+			Status:     "OK",
 		})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{
-		"apiVersion": "1.0",
-		"status":     "OK",
-		"data":       obj[0],
+	c.JSON(http.StatusCreated, Data{
+		ApiVersion: "1.0",
+		Status:     "OK",
+		Data:       obj[0],
 	})
 }
 
