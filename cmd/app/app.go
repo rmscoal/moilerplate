@@ -27,6 +27,7 @@ func Run(cfg *config.Config) {
 		doorkeeper.RegisterSalt(cfg.Doorkeeper.HashSalt()),
 		doorkeeper.RegisterHashMethod(cfg.Doorkeeper.HashMethod()),
 		doorkeeper.RegisterSignMethod(cfg.Doorkeeper.SigningMethod(), cfg.Doorkeeper.SigningSize()),
+		doorkeeper.RegisterDuration(cfg.Doorkeeper.Duration),
 	)
 
 	// Composers .-.
