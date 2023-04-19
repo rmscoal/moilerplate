@@ -1,6 +1,10 @@
 package doorkeeper
 
-import "github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
+import (
+	"fmt"
+
+	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
+)
 
 type doorkeeperService struct {
 	dk *doorkeeper.Doorkeeper
@@ -15,5 +19,5 @@ func (s *doorkeeperService) HashPassword(pass string) string {
 	h.Write([]byte(pass))
 	res := h.Sum([]byte(s.dk.GetSalt()))
 
-	return string(res)
+	return fmt.Sprintf("%x", res)
 }
