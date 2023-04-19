@@ -9,12 +9,6 @@ import (
 // Option -.
 type Option func(*Doorkeeper)
 
-func SigningMethod(method jwt.SigningMethod) Option {
-	return func(d *Doorkeeper) {
-		d.signMethod = method
-	}
-}
-
 func RegisterSecretKey(key string) Option {
 	return func(d *Doorkeeper) {
 		if key != "" {
