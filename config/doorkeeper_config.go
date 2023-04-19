@@ -38,13 +38,21 @@ func (c *Config) newDoorkeeperConfig() {
 // values such that it meets the requirements.
 func (d doorkeeperConfig) validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.hashSalt, validation.Required, validation.Length(20, 10000)),
-		validation.Field(&d.secretKey, validation.Required, validation.Length(20, 10000)),
-		validation.Field(&d.signingMethod, validation.Required,
+		validation.Field(&d.hashSalt, validation.Required.
+			Error("Please provide a hash salt in the environment. This is needed when hashing credentials"),
+			validation.Length(20, 10000)),
+		validation.Field(&d.secretKey, validation.Required.
+			Error("Please provide a secret key in the environment. This is needed for signing authorization tokens"),
+			validation.Length(20, 10000)),
+		validation.Field(&d.signingMethod, validation.Required.
+			Error("Please provide a signing method in the environment. This is needed for signing authorization tokens"),
 			validation.In("HMAC", "RSA", "ECDSA", "RSA-PSS", "EdDSA")),
-		validation.Field(&d.signSize, validation.Required,
-			validation.When(d.signingMethod != "EdDSA", validation.In("256, 384, 512"))),
-		validation.Field(&d.hashMethod, validation.Required,
+		validation.Field(&d.signSize,
+			validation.When(d.signingMethod != "EdDSA", validation.Required.
+				Error("Please provide a signing size in the environment. This is needed for signing authorization tokens"),
+				validation.In("256", "384", "512"))),
+		validation.Field(&d.hashMethod, validation.Required.
+			Error("Please provide hash method in the environment. This is needed when hashing credentials"),
 			validation.In("MD4", "MD5", "SHA1", "SHA224", "SHA256",
 				"SHA384", "SHA512", "SHA3_224", "SHA3_256", "SHA3_384", "SHA3_512")),
 	)
