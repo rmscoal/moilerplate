@@ -9,11 +9,12 @@ type IUseCaseComposer interface {
 }
 
 type useCaseComposer struct {
-	repo IRepoComposer
+	repo    IRepoComposer
+	service IServiceComposer
 }
 
-func NewUseCaseComposer(repo IRepoComposer) IUseCaseComposer {
-	return &useCaseComposer{repo}
+func NewUseCaseComposer(repo IRepoComposer, service IServiceComposer) IUseCaseComposer {
+	return &useCaseComposer{repo: repo, service: service}
 }
 
 func (c *useCaseComposer) CredentialUseCase() usecase.ICredentialUseCase {
