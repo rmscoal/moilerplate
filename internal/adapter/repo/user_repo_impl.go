@@ -26,5 +26,8 @@ func (repo *userRepo) CreateNewUser(ctx context.Context, user domain.User) (doma
 		return user, err
 	}
 
+	// Probably should just attach the new id.
+	user = mapper.MapUserModelToDomain(model)
+
 	return user, nil
 }
