@@ -8,10 +8,11 @@ import (
 )
 
 type doorkeeperConfig struct {
-	HashSalt      string
-	SecretKey     string
-	SigningMethod string
-	SignSize      string
+	hashSalt      string
+	hashMethod    string
+	secretKey     string
+	signingMethod string
+	signSize      string
 }
 
 // newServerConfig method    has a Config receiver
@@ -19,10 +20,11 @@ type doorkeeperConfig struct {
 // Config.
 func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
-		HashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
-		SecretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
-		SigningMethod: os.Getenv("DOORKEEPER_SIGNING_METHOD"),
-		SignSize:      os.Getenv("DOORKEEPER_SIGN_SIZE"),
+		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
+		hashMethod:    os.Getenv("DOORKEEPER_HASH_METHOD"),
+		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
+		signingMethod: os.Getenv("DOORKEEPER_SIGNING_METHOD"),
+		signSize:      os.Getenv("DOORKEEPER_SIGN_SIZE"),
 	}
 
 	if err := d.validate(); err != nil {
@@ -36,11 +38,34 @@ func (c *Config) newDoorkeeperConfig() {
 // values such that it meets the requirements.
 func (d doorkeeperConfig) validate() error {
 	return validation.ValidateStruct(&d,
-		validation.Field(&d.HashSalt, validation.Required, validation.Length(20, 10000)),
-		validation.Field(&d.SecretKey, validation.Required, validation.Length(20, 10000)),
-		validation.Field(&d.SigningMethod, validation.Required,
+		validation.Field(&d.hashSalt, validation.Required, validation.Length(20, 10000)),
+		validation.Field(&d.secretKey, validation.Required, validation.Length(20, 10000)),
+		validation.Field(&d.signingMethod, validation.Required,
 			validation.In("HMAC", "RSA", "ECDSA", "RSA-PSS", "EdDSA")),
-		validation.Field(&d.SignSize, validation.Required,
-			validation.When(d.SigningMethod != "EdDSA", validation.In("256, 384, 512"))),
+		validation.Field(&d.signSize, validation.Required,
+			validation.When(d.signingMethod != "EdDSA", validation.In("256, 384, 512"))),
+		validation.Field(&d.hashMethod, validation.Required,
+			validation.In("MD4", "MD5", "SHA1", "SHA224", "SHA256",
+				"SHA384", "SHA512", "SHA3_224", "SHA3_256", "SHA3_384", "SHA3_512")),
 	)
+}
+
+func (d *doorkeeperConfig) HashSalt() string {
+	return d.hashSalt
+}
+
+func (d *doorkeeperConfig) HashMethod() string {
+	return d.hashMethod
+}
+
+func (d *doorkeeperConfig) SecretKey() string {
+	return d.secretKey
+}
+
+func (d *doorkeeperConfig) SigningMethod() string {
+	return d.signingMethod
+}
+
+func (d *doorkeeperConfig) SigningSize() string {
+	return d.signSize
 }
