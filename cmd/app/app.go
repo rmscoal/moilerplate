@@ -5,6 +5,7 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/config"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/composer"
 	v1 "github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
 	httpserver "github.com/rmscoal/go-restful-monolith-boilerplate/pkg/http"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/postgres"
@@ -21,9 +22,17 @@ func Run(cfg *config.Config) {
 	// Logger .-.
 	logger := logger.NewAppLogger(cfg.App.LogPath)
 
+	dk := doorkeeper.GetDoorkeeper(
+		doorkeeper.RegisterSecretKey(cfg.Doorkeeper.SecretKey()),
+		doorkeeper.RegisterSalt(cfg.Doorkeeper.HashSalt()),
+		doorkeeper.RegisterHashMethod(cfg.Doorkeeper.HashMethod()),
+		doorkeeper.RegisterSignMethod(cfg.Doorkeeper.SigningMethod(), cfg.Doorkeeper.SigningSize()),
+	)
+
 	// Composers .-.
+	serviceComposer := composer.NewServiceComposer(dk)
 	repoComposer := composer.NewRepoComposer(pg, cfg.App.Environment)
-	usecaseComposer := composer.NewUseCaseComposer(repoComposer)
+	usecaseComposer := composer.NewUseCaseComposer(repoComposer, serviceComposer)
 
 	// Http
 	deliveree := gin.Default()
