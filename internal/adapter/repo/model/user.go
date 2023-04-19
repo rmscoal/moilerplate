@@ -6,8 +6,8 @@ type User struct {
 	FirstName      string
 	LastName       string
 	PhoneNumber    string
-	UserCredential UserCredential
-	UserEmails     []UserEmail `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	UserCredential UserCredential `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	UserEmails     []UserEmail    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	BaseModelStamps
 	BaseModelSoftDelete
