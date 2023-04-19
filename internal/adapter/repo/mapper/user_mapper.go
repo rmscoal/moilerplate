@@ -5,7 +5,7 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
 )
 
-func UserDomainToPersistence(user domain.User) model.User {
+func MapUserDomainToPersistence(user domain.User) model.User {
 	res := model.User{
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,

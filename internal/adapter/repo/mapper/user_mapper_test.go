@@ -38,8 +38,8 @@ func TestUserMapperSuite(t *testing.T) {
 	suite.Run(t, new(UserMapperTestSuite))
 }
 
-func (m *UserMapperTestSuite) TestUserDomainToPersistence() {
-	assert.Equal(m.T(), UserDomainToPersistence(m.user), model.User{
+func (m *UserMapperTestSuite) TestMapUserDomainToPersistence() {
+	assert.Equal(m.T(), MapUserDomainToPersistence(m.user), model.User{
 		BaseModelId: model.BaseModelId{Id: m.user.Id},
 		FirstName:   m.user.FirstName,
 		LastName:    m.user.LastName,

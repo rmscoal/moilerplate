@@ -17,7 +17,7 @@ func NewUserRepo(db *gorm.DB) *userRepo {
 }
 
 func (repo *userRepo) CreateNewUser(ctx context.Context, user domain.User) (domain.User, error) {
-	model := mapper.UserDomainToPersistence(user)
+	model := mapper.MapUserDomainToPersistence(user)
 	if err := repo.db.
 		Session(&gorm.Session{FullSaveAssociations: true}).
 		WithContext(ctx).
