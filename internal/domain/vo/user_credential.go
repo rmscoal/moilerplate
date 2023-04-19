@@ -8,6 +8,7 @@ import (
 type UserCredential struct {
 	Username string
 	Password string
+	Token    string
 }
 
 func (v UserCredential) Validate() error {
