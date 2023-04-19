@@ -2,8 +2,9 @@ package doorkeeper
 
 import (
 	"crypto"
+	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Option -.
@@ -21,6 +22,14 @@ func RegisterSalt(salt string) Option {
 	return func(d *Doorkeeper) {
 		if salt != "" {
 			d.salt = salt
+		}
+	}
+}
+
+func RegisterDuration(t time.Duration) Option {
+	return func(d *Doorkeeper) {
+		if t > d.Duration {
+			d.Duration = t
 		}
 	}
 }
@@ -56,6 +65,7 @@ func RegisterHashMethod(alg string) Option {
 
 func RegisterSignMethod(alg, size string) Option {
 	return func(d *Doorkeeper) {
+		d.signMethodStr = alg
 		switch alg {
 		case "HMAC":
 			switch size {
