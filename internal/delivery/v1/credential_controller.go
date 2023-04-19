@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
@@ -11,7 +9,7 @@ import (
 )
 
 type CredentialController struct {
-	// V1BaseController
+	BaseControllerV1
 	uc usecase.ICredentialUseCase
 }
 
@@ -33,15 +31,16 @@ Controllers
 func (controller *CredentialController) signupHandler(c *gin.Context) {
 	var raw dto.SignUpRequest
 	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
-		// controller.ClientError(c, err)
-		c.AbortWithStatus(http.StatusBadRequest)
+		controller.ClientError(c, err)
 		return
 	}
 
 	dto := mapper.SignUpRequestToUserDomain(raw)
 	data, err := controller.uc.SignUp(c.Request.Context(), dto)
 	if err != nil {
-		panic(err)
+		controller.UnexpectedError(c, err)
+		return
 	}
-	c.JSON(201, data)
+
+	controller.Ok(c, data)
 }
