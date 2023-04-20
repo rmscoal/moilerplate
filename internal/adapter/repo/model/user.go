@@ -5,7 +5,7 @@ type User struct {
 
 	FirstName      string
 	LastName       string
-	PhoneNumber    string         `gorm:"index:,unique,type:btre;size:30"`
+	PhoneNumber    string         `gorm:"index:,unique,type:btree;size:30"`
 	UserCredential UserCredential `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	UserEmails     []UserEmail    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
