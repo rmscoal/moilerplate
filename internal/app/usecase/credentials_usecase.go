@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"log"
 
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
@@ -19,13 +18,18 @@ func NewCredentialUseCase(repo repo.IUserRepo, service service.IDoorkeeperServic
 }
 
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
+	// Validate user entity
 	if err := user.ValidateWithContext(ctx); err != nil {
-		log.Println("Error occurred when validating")
-		return user, err
+		return user, NewDomainError("User", err)
 	}
+
+	// Validate repository state
+	if err := uc.repo.ValidateRepoState(ctx, user); err != nil {
+		return user, NewConflictError("User", err)
+	}
+
 	user.Credential.Password = uc.service.HashPassword(user.Credential.Password)
 	if user, err := uc.repo.CreateNewUser(ctx, user); err != nil {
-		log.Println("Error occured when persisting data")
 		return user, err
 	}
 
