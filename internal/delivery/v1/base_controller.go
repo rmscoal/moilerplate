@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
 )
 
 type BaseControllerV1 struct{}
@@ -92,6 +93,10 @@ func (bc BaseControllerV1) NotFound(c *gin.Context, err error) {
 	bc.jsonErrResponse(c, http.StatusNotFound, err)
 }
 
+func (bc BaseControllerV1) RequestTimeout(c *gin.Context, err error) {
+	bc.jsonErrResponse(c, http.StatusRequestTimeout, err)
+}
+
 func (bc BaseControllerV1) Conflict(c *gin.Context, err error) {
 	bc.jsonErrResponse(c, http.StatusConflict, err)
 }
@@ -102,4 +107,25 @@ func (bc BaseControllerV1) UnprocessableEntity(c *gin.Context, err error) {
 
 func (bc BaseControllerV1) UnexpectedError(c *gin.Context, err error) {
 	bc.jsonErrResponse(c, http.StatusInternalServerError, err)
+}
+
+func (bc BaseControllerV1) SummariesUseCaseError(c *gin.Context, err any) {
+	if appError, ok := err.(usecase.AppError); ok {
+		switch appError.Type {
+		case usecase.ErrUnexpected:
+			bc.UnexpectedError(c, appError)
+		case usecase.ErrRequestTimeout:
+			bc.RequestTimeout(c, appError)
+		case usecase.ErrInvalidInput:
+			bc.ClientError(c, appError)
+		case usecase.ErrUnprocessableEntity:
+			bc.UnprocessableEntity(c, appError)
+		case usecase.ErrBadRequest:
+			bc.ClientError(c, appError)
+		case usecase.ErrNotFound:
+			bc.NotFound(c, appError)
+		case usecase.ErrConflictState:
+			bc.Conflict(c, appError)
+		}
+	}
 }
