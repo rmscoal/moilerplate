@@ -127,5 +127,16 @@ func (bc BaseControllerV1) SummariesUseCaseError(c *gin.Context, err any) {
 		case usecase.ErrConflictState:
 			bc.Conflict(c, appError)
 		}
+	} else {
+		bc.UnexpectedError(c, usecase.AppError{
+			Code:    500,
+			Message: "unable to display message",
+			Errors: []usecase.AppErrorDetail{
+				{
+					Message: "unable to display error message",
+					Report:  "Please contact admin@example.com regarding this issue",
+				},
+			},
+		})
 	}
 }
