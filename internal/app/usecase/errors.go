@@ -67,3 +67,11 @@ func NewConflictError(domain string, err error) error {
 func NewDomainError(domain string, err error) error {
 	return NewError(domain, 422, ErrUnprocessableEntity, err)
 }
+
+func NewRepositoryError(domain string, err error) error {
+	return NewError(domain, 500, ErrUnexpected, err)
+}
+
+func NewNotFoundError(domain string, err error) error {
+	return NewError(domain, 404, ErrNotFound, err)
+}
