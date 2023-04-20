@@ -7,5 +7,6 @@ import (
 )
 
 type IUserRepo interface {
+	ValidateRepoState(ctx context.Context, user domain.User) error
 	CreateNewUser(ctx context.Context, user domain.User) (domain.User, error)
 }
