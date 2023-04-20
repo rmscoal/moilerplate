@@ -6,6 +6,7 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 )
 
 type credentialUseCase struct {
@@ -30,7 +31,7 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 
 	user.Credential.Password = uc.service.HashPassword(user.Credential.Password)
 	if user, err := uc.repo.CreateNewUser(ctx, user); err != nil {
-		return user, err
+		return user, NewRepositoryError("User", err)
 	}
 
 	token, err := uc.service.GenerateToken(user)
@@ -39,5 +40,24 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 	}
 	user.Credential.Token = token
 
+	return user, nil
+}
+
+func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+	var user domain.User
+	if err := cred.Validate(); err != nil {
+		return user, NewDomainError("Credentials", err)
+	}
+
+	cred.Password = uc.service.HashPassword(cred.Password)
+	if user, err := uc.repo.GetUserByCredentials(ctx, cred); err != nil {
+		return user, NewNotFoundError("Credentials", err)
+	}
+
+	token, err := uc.service.GenerateToken(user)
+	if err != nil {
+		return user, err
+	}
+	user.Credential.Token = token
 	return user, nil
 }

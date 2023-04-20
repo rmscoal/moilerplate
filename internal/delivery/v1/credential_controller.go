@@ -20,6 +20,7 @@ func NewCredentialController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase)
 	r := rg.Group("/credentials")
 	{
 		r.POST("/signup", controller.signupHandler)
+		r.POST("/login", controller.loginHandler)
 	}
 }
 
@@ -42,5 +43,22 @@ func (controller *CredentialController) signupHandler(c *gin.Context) {
 		return
 	}
 
-	controller.Created(c, mapper.UserDomainToSignUpResponse(user))
+	controller.Created(c, mapper.UserDomainToLoginResponse(user))
+}
+
+func (controller *CredentialController) loginHandler(c *gin.Context) {
+	var raw dto.LoginRequest
+	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {
+		controller.ClientError(c, err)
+		return
+	}
+
+	req := mapper.LoginRequestToUserCredential(raw)
+	user, err := controller.uc.Login(c.Request.Context(), req)
+	if err != nil {
+		controller.SummariesUseCaseError(c, err)
+		return
+	}
+
+	controller.Ok(c, mapper.UserDomainToLoginResponse(user))
 }

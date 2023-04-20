@@ -7,6 +7,7 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/mapper"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 	"gorm.io/gorm"
 )
 
@@ -29,6 +30,32 @@ func (repo *userRepo) CreateNewUser(ctx context.Context, user domain.User) (doma
 	}
 	user = mapper.MapUserModelToDomain(model)
 	return user, nil
+}
+
+func (repo *userRepo) GetUserByCredentials(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+	var userModel model.User
+
+	if err := repo.db.
+		WithContext(ctx).
+		Model(&userModel).
+		InnerJoins("UserCredential", repo.db.Where(&model.UserCredential{Username: cred.Username, Password: cred.Password})).
+		First(&userModel).
+		Error; err != nil {
+		return domain.User{}, fmt.Errorf("user not found with given username and password")
+	}
+	// Alternative:
+	// if err := repo.db.
+	// 	WithContext(ctx).
+	// 	Model(&userModel).
+	// 	Joins(`INNER JOIN user_credentials ON user_credentials.user_id = users.id`).
+	// 	Where("user_credentials.username = ?", cred.Username).
+	// 	Where("user_credentials.password = ?", cred.Password).
+	// 	First(&userModel).
+	// 	Error; err != nil {
+	// 	return domain.User{}, fmt.Errorf("user not found with given username and password")
+	// }
+
+	return mapper.MapUserModelToDomain(userModel), nil
 }
 
 /*
