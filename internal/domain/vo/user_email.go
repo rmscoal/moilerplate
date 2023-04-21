@@ -16,7 +16,7 @@ type UserEmail struct {
 func (v UserEmail) Validate() error {
 	return validation.ValidateStruct(&v,
 		validation.Field(&v.Email, validation.Required, is.Email.Error(fmt.Sprintf("%s is not a valid email", v.Email))),
-		validation.Field(&v.IsPrimary, validation.Required),
+		validation.Field(&v.IsPrimary, validation.In(true, false)),
 	)
 }
 

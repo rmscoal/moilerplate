@@ -9,6 +9,7 @@ import (
 
 type IRepoComposer interface {
 	CredentialRepo() repo.ICredentialRepo
+	UserProfileRepo() repo.IUserProfileRepo
 	Migrate()
 }
 
@@ -33,12 +34,18 @@ func NewRepoComposer(db *postgres.Postgres, env string) IRepoComposer {
 	return comp
 }
 
-func (c *repoComposer) setToDebug() {
-	c.db.ORM = c.db.ORM.Debug()
-}
-
+// -------------- DI --------------
 func (c *repoComposer) CredentialRepo() repo.ICredentialRepo {
 	return impl.NewCredentialRepo(c.db.ORM)
+}
+
+func (c *repoComposer) UserProfileRepo() repo.IUserProfileRepo {
+	return impl.NewUserProfileRepo(c.db.ORM)
+}
+
+// -------------- Setups --------------
+func (c *repoComposer) setToDebug() {
+	c.db.ORM = c.db.ORM.Debug()
 }
 
 func (c *repoComposer) Migrate() {

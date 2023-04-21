@@ -6,6 +6,7 @@ import (
 
 type IUseCaseComposer interface {
 	CredentialUseCase() usecase.ICredentialUseCase
+	UserProfileUseCase() usecase.IUserProfileUseCase
 }
 
 type useCaseComposer struct {
@@ -19,4 +20,8 @@ func NewUseCaseComposer(repo IRepoComposer, service IServiceComposer) IUseCaseCo
 
 func (c *useCaseComposer) CredentialUseCase() usecase.ICredentialUseCase {
 	return usecase.NewCredentialUseCase(c.repo.CredentialRepo(), c.service.DoorkeeperService())
+}
+
+func (c *useCaseComposer) UserProfileUseCase() usecase.IUserProfileUseCase {
+	return usecase.NewUserProfileUseCase(c.repo.UserProfileRepo())
 }

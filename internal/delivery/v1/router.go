@@ -13,5 +13,10 @@ func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUse
 	v1 := r.Group("/api/v1")
 	{
 		NewCredentialController(v1, ucComposer.CredentialUseCase())
+
+		ptd := v1.Group("/ptd", middleware.NewMiddleware().AuthMiddleware(ucComposer.CredentialUseCase()))
+		{
+			NewUserProfileController(ptd, ucComposer.UserProfileUseCase())
+		}
 	}
 }

@@ -12,3 +12,7 @@ type ICredentialUseCase interface {
 	Login(ctx context.Context, cred vo.UserCredential) (domain.User, error)
 	Authorize(ctx context.Context, token string) (domain.User, error)
 }
+
+type IUserProfileUseCase interface {
+	ModifyEmailAddress(ctx context.Context, user domain.User) (domain.User, error)
+}

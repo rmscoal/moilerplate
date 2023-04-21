@@ -4,7 +4,7 @@ type UserEmail struct {
 	BaseModelId
 
 	UserId    string
-	Email     string `gorm:"index:,unique,type:btree"`
+	Email     string `gorm:"unique"`
 	IsPrimary bool
 
 	BaseModelStamps

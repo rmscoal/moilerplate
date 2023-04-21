@@ -8,6 +8,7 @@ import (
 
 func MapUserDomainToPersistence(user domain.User) model.User {
 	res := model.User{
+		BaseModelId: model.BaseModelId{Id: user.Id},
 		FirstName:   user.FirstName,
 		LastName:    user.LastName,
 		PhoneNumber: user.PhoneNumber,
