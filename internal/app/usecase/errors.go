@@ -13,6 +13,7 @@ var (
 	ErrBadRequest          = errors.New("bad request")
 	ErrNotFound            = errors.New("record not found")
 	ErrConflictState       = errors.New("conflict state")
+	ErrUnauthorized        = errors.New("unauthorized action")
 )
 
 var ErrNameMapper = map[error]string{
@@ -23,6 +24,7 @@ var ErrNameMapper = map[error]string{
 	ErrBadRequest:          "BadRequestError",
 	ErrNotFound:            "NotFoundError",
 	ErrConflictState:       "ConflictDuplicationError",
+	ErrUnauthorized:        "UnauthorizedError",
 }
 
 type AppError struct {
@@ -74,4 +76,8 @@ func NewRepositoryError(domain string, err error) error {
 
 func NewNotFoundError(domain string, err error) error {
 	return NewError(domain, 404, ErrNotFound, err)
+}
+
+func NewUnauthorizedError(err error) error {
+	return NewError("", 401, ErrUnauthorized, err)
 }
