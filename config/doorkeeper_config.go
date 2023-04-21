@@ -20,6 +20,7 @@ type doorkeeperConfig struct {
 
 	Duration    time.Duration
 	DurationStr string
+	Path        string
 }
 
 // newServerConfig method    has a Config receiver
@@ -28,6 +29,7 @@ type doorkeeperConfig struct {
 func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
 		DurationStr:   strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
+		Path:          strings.ToLower(os.Getenv("DOORKEEPER_CERT_PATH")),
 		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
 		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
@@ -90,6 +92,7 @@ func (d doorkeeperConfig) validate() error {
 					return nil
 				},
 			))),
+		validation.Field(&d.Path, validation.When(d.signingMethod != "HMAC", validation.Required)),
 	)
 }
 
