@@ -29,6 +29,7 @@ func (s *doorkeeperService) HashPassword(pass string) string {
 func (s *doorkeeperService) GenerateToken(user domain.User) (res string, err error) {
 	now := time.Now().UTC()
 	claims := jwt.MapClaims{
+		"iss":    s.dk.GetIssuer(),
 		"eat":    now.Add(s.dk.Duration).Unix(),
 		"iat":    now.Unix(),
 		"userId": user.Id,
@@ -61,5 +62,21 @@ func (s *doorkeeperService) VerifyAndParseToken(tk string) (string, error) {
 		return "", fmt.Errorf("validate: invalid")
 	}
 
+	if err := s.verifyClaims(claims); err != nil {
+		return "", err
+	}
+
 	return claims["userId"].(string), nil
+}
+
+func (s *doorkeeperService) verifyClaims(claims jwt.MapClaims) error {
+	if time.Now().UTC().Unix() > int64(claims["eat"].(float64)) {
+		return fmt.Errorf("token has expired")
+	}
+
+	if claims["iss"].(string) != s.dk.GetIssuer() {
+		return fmt.Errorf("unrecognized issuer")
+	}
+
+	return nil
 }
