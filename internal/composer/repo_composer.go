@@ -8,7 +8,7 @@ import (
 )
 
 type IRepoComposer interface {
-	CredentialRepo() repo.IUserRepo
+	CredentialRepo() repo.ICredentialRepo
 	Migrate()
 }
 
@@ -37,8 +37,8 @@ func (c *repoComposer) setToDebug() {
 	c.db.ORM = c.db.ORM.Debug()
 }
 
-func (c *repoComposer) CredentialRepo() repo.IUserRepo {
-	return impl.NewUserRepo(c.db.ORM)
+func (c *repoComposer) CredentialRepo() repo.ICredentialRepo {
+	return impl.NewCredentialRepo(c.db.ORM)
 }
 
 func (c *repoComposer) Migrate() {

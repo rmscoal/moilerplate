@@ -11,15 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type userRepo struct {
+type credentialRepo struct {
 	db *gorm.DB
 }
 
-func NewUserRepo(db *gorm.DB) *userRepo {
-	return &userRepo{db}
+func NewCredentialRepo(db *gorm.DB) *credentialRepo {
+	return &credentialRepo{db}
 }
 
-func (repo *userRepo) CreateNewUser(ctx context.Context, user domain.User) (domain.User, error) {
+func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User) (domain.User, error) {
 	model := mapper.MapUserDomainToPersistence(user)
 	if err := repo.db.
 		Session(&gorm.Session{FullSaveAssociations: true}).
@@ -32,7 +32,7 @@ func (repo *userRepo) CreateNewUser(ctx context.Context, user domain.User) (doma
 	return user, nil
 }
 
-func (repo *userRepo) GetUserByCredentials(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+func (repo *credentialRepo) GetUserByCredentials(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
 	var userModel model.User
 
 	if err := repo.db.
@@ -63,7 +63,7 @@ func (repo *userRepo) GetUserByCredentials(ctx context.Context, cred vo.UserCred
 REPO VALIDATIONS IMPLEMENTATIONS
 *************************************************
 */
-func (repo *userRepo) ValidateRepoState(ctx context.Context, user domain.User) error {
+func (repo *credentialRepo) ValidateRepoState(ctx context.Context, user domain.User) error {
 	var err error
 	if repo.UsernameExists(ctx, user.Id, user.Credential.Username) {
 		err = AddError(err, fmt.Errorf("username has been taken"))
@@ -74,7 +74,7 @@ func (repo *userRepo) ValidateRepoState(ctx context.Context, user domain.User) e
 	return err
 }
 
-func (repo *userRepo) UsernameExists(ctx context.Context, id string, username string) bool {
+func (repo *credentialRepo) UsernameExists(ctx context.Context, id string, username string) bool {
 	var userId string
 	repo.db.WithContext(ctx).
 		Model(&model.UserCredential{}).
@@ -84,7 +84,7 @@ func (repo *userRepo) UsernameExists(ctx context.Context, id string, username st
 	return userId != id
 }
 
-func (repo *userRepo) EmailExists(ctx context.Context, id string, email string) bool {
+func (repo *credentialRepo) EmailExists(ctx context.Context, id string, email string) bool {
 	var userId string
 	repo.db.WithContext(ctx).
 		Model(&model.UserEmail{}).

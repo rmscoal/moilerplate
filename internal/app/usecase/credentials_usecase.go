@@ -10,11 +10,11 @@ import (
 )
 
 type credentialUseCase struct {
-	repo    repo.IUserRepo
+	repo    repo.ICredentialRepo
 	service service.IDoorkeeperService
 }
 
-func NewCredentialUseCase(repo repo.IUserRepo, service service.IDoorkeeperService) ICredentialUseCase {
+func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeperService) ICredentialUseCase {
 	return &credentialUseCase{repo: repo, service: service}
 }
 
