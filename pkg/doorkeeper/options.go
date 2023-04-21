@@ -40,6 +40,12 @@ func RegisterDuration(t time.Duration) Option {
 	}
 }
 
+func RegisterIssuer(iss string) Option {
+	return func(d *Doorkeeper) {
+		d.issuer = iss
+	}
+}
+
 func RegisterHashMethod(alg string) Option {
 	return func(d *Doorkeeper) {
 		switch alg {

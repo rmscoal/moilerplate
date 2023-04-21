@@ -18,6 +18,7 @@ type doorkeeperConfig struct {
 	signingMethod string
 	signSize      string
 
+	Issuer      string
 	Duration    time.Duration
 	DurationStr string
 	Path        string
@@ -30,6 +31,7 @@ func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
 		DurationStr:   strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
 		Path:          strings.ToLower(os.Getenv("DOORKEEPER_CERT_PATH")),
+		Issuer:        strings.ToUpper(os.Getenv("DOORKEEPER_ISSUER")),
 		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
 		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
@@ -93,6 +95,7 @@ func (d doorkeeperConfig) validate() error {
 				},
 			))),
 		validation.Field(&d.Path, validation.When(d.signingMethod != "HMAC", validation.Required)),
+		validation.Field(&d.Issuer, validation.Required),
 	)
 }
 

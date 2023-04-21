@@ -30,6 +30,7 @@ type Doorkeeper struct {
 	path          string
 	signMethodStr string
 
+	issuer  string
 	secret  string
 	salt    string
 	privKey any
@@ -72,6 +73,10 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 
 	doorkeeperSingleInstance.GetConcreteSignMethod()
 	return doorkeeperSingleInstance
+}
+
+func (d *Doorkeeper) GetIssuer() string {
+	return d.issuer
 }
 
 func (d *Doorkeeper) GetSalt() string {
