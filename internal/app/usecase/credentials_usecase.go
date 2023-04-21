@@ -30,7 +30,8 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 	}
 
 	user.Credential.Password = uc.service.HashPassword(user.Credential.Password)
-	if user, err := uc.repo.CreateNewUser(ctx, user); err != nil {
+	user, err := uc.repo.CreateNewUser(ctx, user)
+	if err != nil {
 		return user, NewRepositoryError("User", err)
 	}
 
@@ -50,7 +51,8 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	}
 
 	cred.Password = uc.service.HashPassword(cred.Password)
-	if user, err := uc.repo.GetUserByCredentials(ctx, cred); err != nil {
+	user, err := uc.repo.GetUserByCredentials(ctx, cred)
+	if err != nil {
 		return user, NewNotFoundError("Credentials", err)
 	}
 
@@ -60,4 +62,13 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	}
 	user.Credential.Token = token
 	return user, nil
+}
+
+func (uc *credentialUseCase) Authorize(ctx context.Context, token string) (domain.User, error) {
+	id, err := uc.service.VerifyAndParseToken(token)
+	if err != nil {
+		return domain.User{}, NewUnauthorizedError(err)
+	}
+
+	return domain.User{Id: id}, nil
 }
