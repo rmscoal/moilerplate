@@ -14,3 +14,5 @@ go.sum
 # air hot reload
 tmp
 
+# Cert
+cert
