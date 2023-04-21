@@ -44,7 +44,7 @@ var (
 	_defaultSigningMethod = jwt.SigningMethodHS384
 	_defaultSecretKey     = "secretKey" // this value should always be replace by passing options
 	_defaultSalt          = "saltKey"   // this value should always be replace by passing options
-	_defaultDuration      = 300 * time.Second
+	_defaultDuration      = 15 * time.Minute
 )
 
 var (
@@ -71,7 +71,6 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 		})
 	}
 
-	doorkeeperSingleInstance.GetConcreteSignMethod()
 	return doorkeeperSingleInstance
 }
 
