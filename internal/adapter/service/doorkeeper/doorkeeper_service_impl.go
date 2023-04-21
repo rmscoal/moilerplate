@@ -2,6 +2,7 @@ package doorkeeper
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -28,14 +29,37 @@ func (s *doorkeeperService) HashPassword(pass string) string {
 func (s *doorkeeperService) GenerateToken(user domain.User) (res string, err error) {
 	now := time.Now().UTC()
 	claims := jwt.MapClaims{
+		"eat":    now.Add(s.dk.Duration).Unix(),
+		"iat":    now.Unix(),
 		"userId": user.Id,
-		"iat":    now,
-		"eat":    now.Add(s.dk.Duration),
+		"nbf":    now.Unix(),
 	}
-	t := jwt.NewWithClaims(s.dk.GetSignMethod(), claims)
-	res, err = t.SignedString(s.dk.GetPrivKey())
+
+	res, err = jwt.NewWithClaims(s.dk.GetSignMethod(), claims).SignedString(s.dk.GetPrivKey())
 	if err != nil {
 		return res, err
 	}
 	return res, nil
+}
+
+func (s *doorkeeperService) VerifyAndParseToken(tk string) (string, error) {
+	token, err := jwt.Parse(tk, func(t *jwt.Token) (interface{}, error) {
+		switch s.dk.GetConcreteSignMethod() {
+		case reflect.TypeOf(&jwt.SigningMethodRSA{}):
+			if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("signing method invalid")
+			}
+		}
+		return s.dk.GetPubKey(), nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("validation failed: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", fmt.Errorf("validate: invalid")
+	}
+
+	return claims["userId"].(string), nil
 }

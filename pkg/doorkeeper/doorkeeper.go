@@ -14,9 +14,9 @@ package doorkeeper
 
 import (
 	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
+	"io/ioutil"
 	"log"
+	"reflect"
 	"sync"
 	"time"
 
@@ -27,6 +27,7 @@ type Doorkeeper struct {
 	signMethod jwt.SigningMethod
 	hashMethod crypto.Hash
 
+	path          string
 	signMethodStr string
 
 	secret  string
@@ -65,10 +66,11 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 				opt(doorkeeperSingleInstance)
 			}
 
-			doorkeeperSingleInstance.generateKeys()
+			doorkeeperSingleInstance.loadSecretKeys()
 		})
 	}
 
+	doorkeeperSingleInstance.GetConcreteSignMethod()
 	return doorkeeperSingleInstance
 }
 
@@ -92,16 +94,62 @@ func (d *Doorkeeper) GetPrivKey() any {
 	return d.privKey
 }
 
-func (d *Doorkeeper) generateKeys() {
+func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
+	return reflect.TypeOf(d.signMethod)
+}
+
+func (d *Doorkeeper) loadSecretKeys() {
 	switch d.signMethodStr {
 	case "HMAC":
-		d.privKey, d.pubKey = d.secret, d.secret
+		d.privKey, d.pubKey = []byte(d.secret), []byte(d.secret)
 	case "RSA":
-		privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
+		privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privKeyByte)
 		if err != nil {
-			log.Fatalf("doorkeeper unable to generate private key")
+			log.Fatalf("unable to parse rsa private key: %w", err)
+		}
+		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
+		if err != nil {
+			log.Fatalf("unable to parse rsa private key: %w", err)
 		}
 		d.privKey = privKey
-		d.pubKey = privKey.PublicKey
+		d.pubKey = pubKey
+	case "ECDSA":
+		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ecdsa")
+		privKey, err := jwt.ParseECPrivateKeyFromPEM(privKeyByte)
+		if err != nil {
+			log.Fatalf("unable to parse ec private key: %w", err)
+		}
+		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
+		if err != nil {
+			log.Fatalf("unable to parse ec private key: %w", err)
+		}
+		d.privKey = privKey
+		d.pubKey = pubKey
+	case "EdDSA":
+		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ed2559")
+		privKey, err := jwt.ParseEdPrivateKeyFromPEM(privKeyByte)
+		if err != nil {
+			log.Fatalf("unable to parse ed private key: %w", err)
+		}
+		pubKey, err := jwt.ParseEdPublicKeyFromPEM(pubKeyByte)
+		if err != nil {
+			log.Fatalf("unable to parse ed private key: %w", err)
+		}
+		d.privKey = privKey
+		d.pubKey = pubKey
 	}
+}
+
+func (d *Doorkeeper) getKeyFromFile(fileName string) ([]byte, []byte) {
+	privKey, err := ioutil.ReadFile(d.path + "/" + fileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	pubKey, err := ioutil.ReadFile(d.path + "/" + fileName + ".pub")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return privKey, pubKey
 }

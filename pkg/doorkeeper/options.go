@@ -26,6 +26,12 @@ func RegisterSalt(salt string) Option {
 	}
 }
 
+func RegisterPath(path string) Option {
+	return func(d *Doorkeeper) {
+		d.path = path
+	}
+}
+
 func RegisterDuration(t time.Duration) Option {
 	return func(d *Doorkeeper) {
 		if t > d.Duration {
