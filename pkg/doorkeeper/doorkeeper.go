@@ -106,11 +106,11 @@ func (d *Doorkeeper) loadSecretKeys() {
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
 		privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse rsa private key: %w", err)
+			log.Fatalf("unable to parse rsa private key: %s", err)
 		}
 		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse rsa private key: %w", err)
+			log.Fatalf("unable to parse rsa private key: %s", err)
 		}
 		d.privKey = privKey
 		d.pubKey = pubKey
@@ -118,11 +118,11 @@ func (d *Doorkeeper) loadSecretKeys() {
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ecdsa")
 		privKey, err := jwt.ParseECPrivateKeyFromPEM(privKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse ec private key: %w", err)
+			log.Fatalf("unable to parse ec private key: %s", err)
 		}
 		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse ec private key: %w", err)
+			log.Fatalf("unable to parse ec private key: %s", err)
 		}
 		d.privKey = privKey
 		d.pubKey = pubKey
@@ -130,11 +130,11 @@ func (d *Doorkeeper) loadSecretKeys() {
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ed2559")
 		privKey, err := jwt.ParseEdPrivateKeyFromPEM(privKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse ed private key: %w", err)
+			log.Fatalf("unable to parse ed private key: %s", err)
 		}
 		pubKey, err := jwt.ParseEdPublicKeyFromPEM(pubKeyByte)
 		if err != nil {
-			log.Fatalf("unable to parse ed private key: %w", err)
+			log.Fatalf("unable to parse ed private key: %s", err)
 		}
 		d.privKey = privKey
 		d.pubKey = pubKey
