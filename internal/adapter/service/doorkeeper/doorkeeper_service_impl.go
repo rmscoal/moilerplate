@@ -2,7 +2,6 @@ package doorkeeper
 
 import (
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -46,8 +45,24 @@ func (s *doorkeeperService) GenerateToken(user domain.User) (res string, err err
 func (s *doorkeeperService) VerifyAndParseToken(tk string) (string, error) {
 	token, err := jwt.Parse(tk, func(t *jwt.Token) (interface{}, error) {
 		switch s.dk.GetConcreteSignMethod() {
-		case reflect.TypeOf(&jwt.SigningMethodRSA{}):
+		case doorkeeper.RSA_SIGN_METHOD_TYPE:
 			if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("signing method invalid")
+			}
+		case doorkeeper.RSAPSS_SIGN_METHOD_TYPE:
+			if _, ok := t.Method.(*jwt.SigningMethodRSAPSS); !ok {
+				return nil, fmt.Errorf("signing method invalid")
+			}
+		case doorkeeper.HMAC_SIGN_METHOD_TYPE:
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("signing method invalid")
+			}
+		case doorkeeper.ECDSA_SIGN_METHOD_TYPE:
+			if _, ok := t.Method.(*jwt.SigningMethodECDSA); !ok {
+				return nil, fmt.Errorf("signing method invalid")
+			}
+		case doorkeeper.EdDSA_SIGN_METHOD_TYPE:
+			if _, ok := t.Method.(*jwt.SigningMethodEd25519); !ok {
 				return nil, fmt.Errorf("signing method invalid")
 			}
 		}

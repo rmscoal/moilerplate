@@ -77,7 +77,6 @@ func RegisterHashMethod(alg string) Option {
 
 func RegisterSignMethod(alg, size string) Option {
 	return func(d *Doorkeeper) {
-		d.signMethodStr = alg
 		switch alg {
 		case "HMAC":
 			switch size {

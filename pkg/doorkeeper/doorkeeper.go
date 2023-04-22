@@ -27,8 +27,7 @@ type Doorkeeper struct {
 	signMethod jwt.SigningMethod
 	hashMethod crypto.Hash
 
-	path          string
-	signMethodStr string
+	path string
 
 	issuer  string
 	secret  string
@@ -38,6 +37,14 @@ type Doorkeeper struct {
 
 	Duration time.Duration
 }
+
+var (
+	HMAC_SIGN_METHOD_TYPE   = reflect.TypeOf(&jwt.SigningMethodHMAC{})
+	RSA_SIGN_METHOD_TYPE    = reflect.TypeOf(&jwt.SigningMethodRSA{})
+	RSAPSS_SIGN_METHOD_TYPE = reflect.TypeOf(&jwt.SigningMethodRSAPSS{})
+	ECDSA_SIGN_METHOD_TYPE  = reflect.TypeOf(&jwt.SigningMethodECDSA{})
+	EdDSA_SIGN_METHOD_TYPE  = reflect.TypeOf(&jwt.SigningMethodEd25519{})
+)
 
 var (
 	_defaultHashMethod    = crypto.SHA256
@@ -103,45 +110,21 @@ func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
 }
 
 func (d *Doorkeeper) loadSecretKeys() {
-	switch d.signMethodStr {
-	case "HMAC":
+	switch d.GetConcreteSignMethod() {
+	case HMAC_SIGN_METHOD_TYPE:
 		d.privKey, d.pubKey = []byte(d.secret), []byte(d.secret)
-	case "RSA":
+	case RSA_SIGN_METHOD_TYPE:
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
-		privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse rsa private key: %s", err)
-		}
-		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse rsa private key: %s", err)
-		}
-		d.privKey = privKey
-		d.pubKey = pubKey
-	case "ECDSA":
+		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
+	case RSAPSS_SIGN_METHOD_TYPE:
+		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
+		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
+	case ECDSA_SIGN_METHOD_TYPE:
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ecdsa")
-		privKey, err := jwt.ParseECPrivateKeyFromPEM(privKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse ec private key: %s", err)
-		}
-		pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse ec private key: %s", err)
-		}
-		d.privKey = privKey
-		d.pubKey = pubKey
-	case "EdDSA":
+		d.privKey, d.pubKey = d.parseECKeysFromPem(privKeyByte, pubKeyByte)
+	case EdDSA_SIGN_METHOD_TYPE:
 		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ed2559")
-		privKey, err := jwt.ParseEdPrivateKeyFromPEM(privKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse ed private key: %s", err)
-		}
-		pubKey, err := jwt.ParseEdPublicKeyFromPEM(pubKeyByte)
-		if err != nil {
-			log.Fatalf("unable to parse ed private key: %s", err)
-		}
-		d.privKey = privKey
-		d.pubKey = pubKey
+		d.privKey, d.pubKey = d.parseEdKeysFromPem(privKeyByte, pubKeyByte)
 	}
 }
 
@@ -153,6 +136,45 @@ func (d *Doorkeeper) getKeyFromFile(fileName string) ([]byte, []byte) {
 	pubKey, err := ioutil.ReadFile(d.path + "/" + fileName + ".pub")
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	return privKey, pubKey
+}
+
+func (d *Doorkeeper) parseECKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
+	privKey, err := jwt.ParseECPrivateKeyFromPEM(privByte)
+	if err != nil {
+		log.Fatalf("unable to parse ec private key: %s", err)
+	}
+	pubKey, err := jwt.ParseECPublicKeyFromPEM(pubByte)
+	if err != nil {
+		log.Fatalf("unable to parse ec public key: %s", err)
+	}
+
+	return privKey, pubKey
+}
+
+func (d *Doorkeeper) parseRSAKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
+	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privByte)
+	if err != nil {
+		log.Fatalf("unable to parse rsa private key: %s", err)
+	}
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubByte)
+	if err != nil {
+		log.Fatalf("unable to parse rsa public key: %s", err)
+	}
+
+	return privKey, pubKey
+}
+
+func (d *Doorkeeper) parseEdKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
+	privKey, err := jwt.ParseEdPrivateKeyFromPEM(privByte)
+	if err != nil {
+		log.Fatalf("unable to parse ed private key: %s", err)
+	}
+	pubKey, err := jwt.ParseEdPublicKeyFromPEM(pubByte)
+	if err != nil {
+		log.Fatalf("unable to parse ed public key: %s", err)
 	}
 
 	return privKey, pubKey
