@@ -110,7 +110,7 @@ func (d doorkeeperConfig) parseTime() time.Duration {
 		res = time.Hour
 	}
 	// Check time value
-	val, _ := strconv.Atoi(timeSlc[1])
+	val, _ := strconv.Atoi(timeSlc[0])
 	res = time.Duration(val) * res
 	return res
 }
