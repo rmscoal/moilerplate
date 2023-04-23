@@ -1,4 +1,4 @@
-package doorkeeper
+package service
 
 import (
 	"fmt"
