@@ -20,7 +20,7 @@ type doorkeeperConfig struct {
 
 	Issuer      string
 	Duration    time.Duration
-	DurationStr string
+	durationStr string
 	Path        string
 }
 
@@ -29,7 +29,7 @@ type doorkeeperConfig struct {
 // Config.
 func (c *Config) newDoorkeeperConfig() {
 	d := doorkeeperConfig{
-		DurationStr:   strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
+		durationStr:   strings.ToLower(os.Getenv("DOORKEEPER_TOKEN_DURATION")),
 		Path:          strings.ToLower(os.Getenv("DOORKEEPER_CERT_PATH")),
 		Issuer:        strings.ToUpper(os.Getenv("DOORKEEPER_ISSUER")),
 		hashSalt:      os.Getenv("DOORKEEPER_HASH_SALT"),
@@ -43,7 +43,7 @@ func (c *Config) newDoorkeeperConfig() {
 		log.Fatalf("FATAL - %s", err)
 	}
 
-	if d.DurationStr != "" {
+	if d.durationStr != "" {
 		d.Duration = d.parseTime()
 	}
 	c.Doorkeeper = d
@@ -72,7 +72,7 @@ func (d doorkeeperConfig) validate() error {
 			Error("Please provide hash method in the environment. This is needed when hashing credentials"),
 			validation.In("MD4", "MD5", "SHA1", "SHA224", "SHA256",
 				"SHA384", "SHA512", "SHA3_224", "SHA3_256", "SHA3_384", "SHA3_512")),
-		validation.Field(&d.Duration, validation.When(d.DurationStr != "", validation.By(d.validateTime))),
+		validation.Field(&d.durationStr, validation.When(d.durationStr != "", validation.By(d.validateTime))),
 		validation.Field(&d.Path, validation.When(d.signingMethod != "HMAC", validation.Required)),
 		validation.Field(&d.Issuer, validation.Required),
 	)
@@ -85,13 +85,13 @@ func (d doorkeeperConfig) validateTime(value any) error {
 		return fmt.Errorf("required length is 2 but got %d", len(timeSlc))
 	}
 	// Checks time meter
-	if err := validation.Validate(&timeSlc[0],
+	if err := validation.Validate(&timeSlc[1],
 		validation.In("second", "seconds", "minute", "minutes", "hour", "hours").
-			Error("invalid time meter option")); err != nil {
+			Error("invalid time unit")); err != nil {
 		return err
 	}
 	// Check time value
-	_, err := strconv.Atoi(timeSlc[1])
+	_, err := strconv.Atoi(timeSlc[0])
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (d doorkeeperConfig) validateTime(value any) error {
 
 func (d doorkeeperConfig) parseTime() time.Duration {
 	var res time.Duration
-	timeSlc := strings.Split(d.DurationStr, " ")
+	timeSlc := strings.Split(d.durationStr, " ")
 	switch timeSlc[1] {
 	case "second", "seconds":
 		res = time.Second
