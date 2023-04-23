@@ -72,31 +72,30 @@ func (d doorkeeperConfig) validate() error {
 			Error("Please provide hash method in the environment. This is needed when hashing credentials"),
 			validation.In("MD4", "MD5", "SHA1", "SHA224", "SHA256",
 				"SHA384", "SHA512", "SHA3_224", "SHA3_256", "SHA3_384", "SHA3_512")),
-		validation.Field(&d.Duration, validation.When(d.DurationStr != "",
-			validation.By(
-				func(value interface{}) error {
-					timeSlc := strings.Split(value.(string), " ")
-					// Checks length
-					if len(timeSlc) != 2 {
-						return fmt.Errorf("required length is 2 but got %d", len(timeSlc))
-					}
-					// Checks time meter
-					if err := validation.Validate(&timeSlc[0],
-						validation.In("second", "seconds", "minute", "minutes", "hour", "hours").
-							Error("invalid time meter option")); err != nil {
-						return err
-					}
-					// Check time value
-					_, err := strconv.Atoi(timeSlc[1])
-					if err != nil {
-						return err
-					}
-					return nil
-				},
-			))),
+		validation.Field(&d.Duration, validation.When(d.DurationStr != "", validation.By(d.validateTime))),
 		validation.Field(&d.Path, validation.When(d.signingMethod != "HMAC", validation.Required)),
 		validation.Field(&d.Issuer, validation.Required),
 	)
+}
+
+func (d doorkeeperConfig) validateTime(value any) error {
+	timeSlc := strings.Split(value.(string), " ")
+	// Checks length
+	if len(timeSlc) != 2 {
+		return fmt.Errorf("required length is 2 but got %d", len(timeSlc))
+	}
+	// Checks time meter
+	if err := validation.Validate(&timeSlc[0],
+		validation.In("second", "seconds", "minute", "minutes", "hour", "hours").
+			Error("invalid time meter option")); err != nil {
+		return err
+	}
+	// Check time value
+	_, err := strconv.Atoi(timeSlc[1])
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d doorkeeperConfig) parseTime() time.Duration {
