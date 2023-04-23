@@ -29,7 +29,7 @@ func NewMiddleware() *Middleware {
 			middlewareSingleton = &Middleware{}
 		})
 	}
-	return &Middleware{}
+	return middlewareSingleton
 }
 
 func (m *Middleware) addToContext(c *gin.Context, key string, value any) {

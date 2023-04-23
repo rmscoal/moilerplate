@@ -99,6 +99,10 @@ func (bc BaseControllerV1) UnprocessableEntity(c *gin.Context, err error) {
 	bc.jsonErrResponse(c, http.StatusUnprocessableEntity, err)
 }
 
+func (bc BaseControllerV1) TooManyRequest(c *gin.Context) {
+	bc.jsonErrResponse(c, http.StatusTooManyRequests, gin.H{"message": "Too many request, try again later"})
+}
+
 func (bc BaseControllerV1) UnexpectedError(c *gin.Context, err error) {
 	bc.jsonErrResponse(c, http.StatusInternalServerError, err)
 }

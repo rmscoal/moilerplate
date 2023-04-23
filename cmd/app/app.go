@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/config"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/composer"
@@ -9,6 +11,7 @@ import (
 	httpserver "github.com/rmscoal/go-restful-monolith-boilerplate/pkg/http"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/postgres"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/rater"
 )
 
 func Run(cfg *config.Config) {
@@ -32,13 +35,22 @@ func Run(cfg *config.Config) {
 		doorkeeper.RegisterPath(cfg.Doorkeeper.Path),
 	)
 
+	rt := rater.GetRater(context.Background(),
+		rater.RegisterRateLimitForEachClient(cfg.App.RaterLimit),
+		rater.RegisterBurstLimitForEachClient(cfg.App.BurstLimit),
+		rater.RegisterEvaluationInterval(cfg.App.RaterEvaluationInterval),
+		rater.RegisterDeletionTime(cfg.App.RaterDeletionTime),
+	)
+
 	// Composers .-.
-	serviceComposer := composer.NewServiceComposer(dk)
+	serviceComposer := composer.NewServiceComposer(dk, rt)
 	repoComposer := composer.NewRepoComposer(pg, cfg.App.Environment)
 	usecaseComposer := composer.NewUseCaseComposer(repoComposer, serviceComposer)
 
 	// Http
 	deliveree := gin.Default()
 	v1.NewRouter(deliveree, logger, usecaseComposer)
-	httpserver.NewServer(deliveree)
+	httpserver.NewServer(deliveree,
+		httpserver.RegisterHostAndPort(cfg.Server.Host, cfg.Server.Port),
+	)
 }

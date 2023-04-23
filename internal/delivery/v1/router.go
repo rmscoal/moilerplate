@@ -12,10 +12,16 @@ func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUse
 
 	v1 := r.Group("/api/v1")
 	{
+		// Rate limiting middleware
+		v1.Use(middleware.NewMiddleware().RateLimiterMiddleware(ucComposer.RaterUseCase()))
+
 		NewCredentialController(v1, ucComposer.CredentialUseCase())
 
-		ptd := v1.Group("/ptd", middleware.NewMiddleware().AuthMiddleware(ucComposer.CredentialUseCase()))
+		ptd := v1.Group("/ptd")
 		{
+			// Authorizations middleware
+			ptd.Use(middleware.NewMiddleware().AuthMiddleware(ucComposer.CredentialUseCase()))
+
 			NewUserProfileController(ptd, ucComposer.UserProfileUseCase())
 		}
 	}
