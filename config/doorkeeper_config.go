@@ -57,10 +57,10 @@ func (d doorkeeperConfig) validate() error {
 			Error("Please provide a hash salt in the environment. This is needed when hashing credentials"),
 			validation.Length(20, 10000)),
 		validation.Field(&d.secretKey,
-			validation.When(d.signingMethod == "RSA", validation.Skip).Else(
-				validation.Required.
-					Error("Please provide a secret key in the environment. This is needed for signing authorization tokens"),
-				validation.Length(20, 10000))),
+			validation.When(d.signingMethod == "HMAC", validation.Required.
+				Error("Please provide a secret key in the environment. This is needed for signing authorization tokens"),
+				validation.Length(20, 10000),
+			).Else(validation.Skip)),
 		validation.Field(&d.signingMethod, validation.Required.
 			Error("Please provide a signing method in the environment. This is needed for signing authorization tokens"),
 			validation.In("HMAC", "RSA", "ECDSA", "RSA-PSS", "EdDSA")),
