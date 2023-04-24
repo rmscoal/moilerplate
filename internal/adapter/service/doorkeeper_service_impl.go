@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
@@ -42,7 +44,7 @@ func (s *doorkeeperService) GenerateToken(user domain.User) (res string, err err
 	return res, nil
 }
 
-func (s *doorkeeperService) VerifyAndParseToken(tk string) (string, error) {
+func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) (string, error) {
 	token, err := jwt.Parse(tk, func(t *jwt.Token) (interface{}, error) {
 		switch s.dk.GetConcreteSignMethod() {
 		case doorkeeper.RSA_SIGN_METHOD_TYPE:
@@ -77,16 +79,36 @@ func (s *doorkeeperService) VerifyAndParseToken(tk string) (string, error) {
 		return "", fmt.Errorf("validate: invalid")
 	}
 
-	if err := s.verifyClaims(claims); err != nil {
+	if err := s.verifyClaims(ctx, claims); err != nil {
 		return "", err
 	}
 
 	return claims["userId"].(string), nil
 }
 
-func (s *doorkeeperService) verifyClaims(claims jwt.MapClaims) error {
-	if time.Now().UTC().Unix() > int64(claims["eat"].(float64)) {
+func (s *doorkeeperService) verifyClaims(ctx context.Context, claims jwt.MapClaims) error {
+	if err := s.validateKeys(ctx, claims, "iss", "eat", "nbf"); err != nil {
+		return err
+	}
+
+	now := time.Now().UTC()
+
+	if _, ok := claims["iss"].(string); !ok {
+		return fmt.Errorf("invalid token claims")
+	}
+	if _, ok := claims["eat"].(float64); !ok {
+		return fmt.Errorf("invalid token claims")
+	}
+	if _, ok := claims["nbf"].(float64); !ok {
+		return fmt.Errorf("invalid token claims")
+	}
+
+	if now.Unix() > int64(claims["eat"].(float64)) {
 		return fmt.Errorf("token has expired")
+	}
+
+	if int64(claims["nbf"].(float64)) > now.Unix() {
+		return fmt.Errorf("invalid token claims: nbf > now")
 	}
 
 	if claims["iss"].(string) != s.dk.GetIssuer() {
@@ -94,4 +116,16 @@ func (s *doorkeeperService) verifyClaims(claims jwt.MapClaims) error {
 	}
 
 	return nil
+}
+
+func (s *doorkeeperService) validateKeys(ctx context.Context, obj map[string]any, args ...any) error {
+	keys := make([]string, len(obj))
+
+	index := 0
+	for k := range obj {
+		keys[index] = k
+		index++
+	}
+
+	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.In(args...)))
 }

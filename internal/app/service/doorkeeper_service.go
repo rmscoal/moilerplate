@@ -1,9 +1,13 @@
 package service
 
-import "github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+import (
+	"context"
+
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+)
 
 type IDoorkeeperService interface {
 	HashPassword(pass string) string
 	GenerateToken(user domain.User) (string, error)
-	VerifyAndParseToken(tk string) (string, error)
+	VerifyAndParseToken(ctx context.Context, tk string) (string, error)
 }

@@ -65,7 +65,7 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 }
 
 func (uc *credentialUseCase) Authorize(ctx context.Context, token string) (domain.User, error) {
-	id, err := uc.service.VerifyAndParseToken(token)
+	id, err := uc.service.VerifyAndParseToken(ctx, token)
 	if err != nil {
 		return domain.User{}, NewUnauthorizedError(err)
 	}

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
 	"github.com/stretchr/testify/mock"
 )
@@ -19,7 +21,7 @@ func (service *DoorkeeperServiceMock) GenerateToken(user domain.User) (string, e
 	return args.String(0), args.Error(1)
 }
 
-func (service *DoorkeeperServiceMock) VerifyAndParseToken(tk string) (string, error) {
-	args := service.Called(tk)
+func (service *DoorkeeperServiceMock) VerifyAndParseToken(ctx context.Context, tk string) (string, error) {
+	args := service.Called(ctx, tk)
 	return args.String(0), args.Error(1)
 }
