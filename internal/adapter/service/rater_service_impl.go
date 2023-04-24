@@ -17,7 +17,8 @@ func NewRaterService(rt *rater.Rater) *raterService {
 func (service *raterService) IsClientAllowed(ctx context.Context, ip string) bool {
 	client, found := service.rt.GetClient(ip)
 	if !found {
-		service.rt.AddNewClient(ip)
+		client = service.rt.AddNewClient(ip)
+		return service.rt.IsClientAllowed(client)
 	}
 
 	return service.rt.IsClientAllowed(client)

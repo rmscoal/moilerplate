@@ -6,6 +6,7 @@ require (
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/joho/godotenv v1.5.1
+	golang.org/x/time v0.3.0
 	gorm.io/gorm v1.25.0
 )
 
@@ -13,7 +14,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	golang.org/x/time v0.3.0 // indirect
 )
 
 require (

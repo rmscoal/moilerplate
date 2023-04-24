@@ -92,11 +92,13 @@ func (rater *Rater) GetClient(ip string) (*client, bool) {
 	return client, found
 }
 
-func (rater *Rater) AddNewClient(ip string) {
+func (rater *Rater) AddNewClient(ip string) *client {
 	rater.mu.Lock()
 	defer rater.mu.Unlock()
 
-	rater.clients[ip] = &client{limiter: rate.NewLimiter(rater.rateForEachClient, rater.burstForEachClient), lastSeen: time.Now()}
+	client := &client{limiter: rate.NewLimiter(rater.rateForEachClient, rater.burstForEachClient), lastSeen: time.Now()}
+	rater.clients[ip] = client
+	return client
 }
 
 func (rater *Rater) IsClientAllowed(client *client) bool {
