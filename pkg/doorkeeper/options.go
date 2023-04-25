@@ -34,7 +34,7 @@ func RegisterPath(path string) Option {
 
 func RegisterDuration(t time.Duration) Option {
 	return func(d *Doorkeeper) {
-		if t > d.Duration {
+		if t > 0 {
 			d.Duration = t
 		}
 	}
