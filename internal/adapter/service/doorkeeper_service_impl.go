@@ -28,23 +28,6 @@ func (s *doorkeeperService) HashPassword(pass string) string {
 	return fmt.Sprintf("%x", res)
 }
 
-func (s *doorkeeperService) GenerateToken(user domain.User) (res string, err error) {
-	now := time.Now().UTC()
-	claims := jwt.MapClaims{
-		"iss":    s.dk.GetIssuer(),
-		"eat":    now.Add(s.dk.Duration).Unix(),
-		"iat":    now.Unix(),
-		"userId": user.Id,
-		"nbf":    now.Unix(),
-	}
-
-	res, err = jwt.NewWithClaims(s.dk.GetSignMethod(), claims).SignedString(s.dk.GetPrivKey())
-	if err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
 func (s *doorkeeperService) GenerateUserTokens(user domain.User) (vo.UserToken, error) {
 	var userToken vo.UserToken
 
@@ -88,7 +71,7 @@ func (s *doorkeeperService) GenerateRefreshToken(user domain.User) (rt string, e
 		"iss": s.dk.GetIssuer(),
 		"eat": now.Add(time.Hour /* use: s.dk.RefreshDuration */).Unix(),
 		"iat": now.Unix(),
-		"jit": user.Credential.Tokens.TokenID,
+		"jti": user.Credential.Tokens.TokenID,
 		"nbf": now.Unix(),
 	}
 
@@ -185,7 +168,7 @@ func (s *doorkeeperService) verifyClaims(ctx context.Context, claims jwt.MapClai
 	}
 
 	if now.Unix() > int64(claims["eat"].(float64)) {
-		return fmt.Errorf("token has expired in verify claims")
+		return fmt.Errorf("token has expired")
 	}
 
 	if int64(claims["nbf"].(float64)) > now.Unix() {

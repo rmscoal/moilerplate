@@ -93,7 +93,7 @@ func (uc *credentialUseCase) Refresh(ctx context.Context, refreshToken string) (
 
 	user, err := uc.repo.GetUserByJti(ctx, jti)
 	if err != nil {
-		return domain.User{}, NewUnauthorizedError(err)
+		return domain.User{}, NewUnauthorizedErrorWithReport(err)
 	}
 
 	if err := uc.validateUserToken(ctx, user); err != nil {
@@ -128,22 +128,26 @@ func (uc *credentialUseCase) prepareUserTokensGeneration(ctx context.Context, us
 }
 
 func (uc *credentialUseCase) validateUserToken(ctx context.Context, user domain.User) error {
-	if user.Credential.Tokens.Issued {
-		return NewUnauthorizedError(fmt.Errorf("jti was issued before"))
-	}
-
 	version, err := uc.repo.GetLatestUserTokenVersion(ctx, user)
 	if err != nil {
 		return NewRepositoryError("Credentials", err)
 	}
-	if user.Credential.Tokens.Version < version {
-		uc.lockDownUser(ctx, user)
-		return NewUnauthorizedError(fmt.Errorf("jti version is not newest"))
+
+	if user.Credential.Tokens.Issued || user.Credential.Tokens.Version < version {
+		err := fmt.Errorf("jti was issued before")
+		rErr := uc.lockDownUser(ctx, user)
+		if rErr != nil {
+			err = utils.AddError(err, rErr)
+		}
+		return NewUnauthorizedError(err)
 	}
 
 	return nil
 }
 
 func (uc *credentialUseCase) lockDownUser(ctx context.Context, user domain.User) error {
+	if err := uc.repo.DeleteUserTokenFamily(ctx, user); err != nil {
+		return NewRepositoryError("Credentials", err)
+	}
 	return nil
 }

@@ -29,3 +29,18 @@ func MapAuthCredToUserTokenVO(authCred model.AuthorizationCredential) vo.UserTok
 		IssuedAt: authCred.IssuedAt,
 	}
 }
+
+func MapAuthCredModelToUserDomain(authCred model.AuthorizationCredential) domain.User {
+	tokens := MapAuthCredToUserTokenVO(authCred)
+	res := domain.User{
+		Id:        authCred.UserId,
+		FirstName: authCred.User.FirstName,
+		LastName:  authCred.User.LastName,
+		Credential: vo.UserCredential{
+			Username: authCred.User.UserCredential.Username,
+		},
+	}
+
+	res.Credential.Tokens = tokens
+	return res
+}

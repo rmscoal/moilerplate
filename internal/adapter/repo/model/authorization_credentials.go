@@ -12,5 +12,6 @@ type AuthorizationCredential struct {
 	Parent   *AuthorizationCredential
 
 	UserId   string
+	User     User
 	IssuedAt time.Time `gorm:"default:now()"`
 }

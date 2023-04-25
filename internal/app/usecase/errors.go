@@ -62,6 +62,24 @@ func NewError(domain string, code int, errType, err error) error {
 	return nErr
 }
 
+func NewErrorWithReport(domain string, code int, errType, err error, report string) error {
+	nErr := AppError{
+		Code:    code,
+		Type:    errType,
+		Message: errType.Error(),
+	}
+	for _, message := range strings.Split(err.Error(), ";") {
+		nErr.Errors = append(nErr.Errors, AppErrorDetail{
+			Domain:  domain,
+			Reason:  ErrNameMapper[errType],
+			Message: strings.Trim(message, " "),
+			Report:  report,
+		})
+	}
+
+	return nErr
+}
+
 func NewConflictError(domain string, err error) error {
 	return NewError(domain, 409, ErrConflictState, err)
 }
@@ -84,4 +102,10 @@ func NewNotFoundError(domain string, err error) error {
 
 func NewUnauthorizedError(err error) error {
 	return NewError("", 401, ErrUnauthorized, err)
+}
+
+func NewUnauthorizedErrorWithReport(err error) error {
+	return NewErrorWithReport("", 401, ErrUnauthorized, err,
+		`This might be due to a stolen token or malformed jti. Please go to www.moilorplate.com/change-password to secure your account`,
+	)
 }

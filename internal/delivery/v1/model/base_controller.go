@@ -124,6 +124,8 @@ func (bc BaseControllerV1) SummariesUseCaseError(c *gin.Context, err any) {
 			bc.NotFound(c, appError)
 		case usecase.ErrConflictState:
 			bc.Conflict(c, appError)
+		case usecase.ErrUnauthorized:
+			bc.Unauthorized(c, appError)
 		}
 	} else {
 		bc.UnexpectedError(c, usecase.AppError{

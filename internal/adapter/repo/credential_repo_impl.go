@@ -59,34 +59,43 @@ func (repo *credentialRepo) GetUserByCredentials(ctx context.Context, cred vo.Us
 }
 
 func (repo *credentialRepo) GetUserByJti(ctx context.Context, jti string) (domain.User, error) {
-	var userModel model.User
-	authCred := model.AuthorizationCredential{BaseModelId: model.BaseModelId{Id: jti}}
+	var authCred model.AuthorizationCredential
 
 	if err := repo.db.WithContext(ctx).
-		Where(&authCred).
-		Association("User").
-		Find(&userModel); err != nil {
-		return domain.User{}, fmt.Errorf("unable to get user from jti")
+		Preload("User").
+		Preload("User.UserCredential").
+		First(&authCred, "id = ?", jti).Error; err != nil {
+		return domain.User{}, fmt.Errorf("unable to get user from jti: %s", err)
 	}
 
-	if err := repo.db.WithContext(ctx).Model(&authCred).Update("issued", true).Error; err != nil {
-		return domain.User{}, fmt.Errorf("unable to issue jti")
-	}
-
-	userModel.AuthorizationCredentials = append(userModel.AuthorizationCredentials, authCred)
-	return mapper.MapUserModelToDomain(userModel), nil
+	return mapper.MapAuthCredModelToUserDomain(authCred), nil
 }
 
 func (repo *credentialRepo) SetNewUserToken(ctx context.Context, user domain.User) (vo.UserToken, error) {
 	authCred := mapper.MapUserDomainToNewAuthCredModel(user)
 
-	fmt.Printf("%+v\n", authCred)
+	if err := repo.IssueParentToken(ctx, authCred); err != nil {
+		return vo.UserToken{}, err
+	}
 
 	if err := repo.db.WithContext(ctx).Create(&authCred).Error; err != nil {
 		return vo.UserToken{}, fmt.Errorf("unable to set a new user token: %s", err)
 	}
 
 	return mapper.MapAuthCredToUserTokenVO(authCred), nil
+}
+
+func (repo *credentialRepo) IssueParentToken(ctx context.Context, authCred model.AuthorizationCredential) error {
+	if authCred.ParentId != nil {
+		if err := repo.db.WithContext(ctx).
+			Model(&model.AuthorizationCredential{}).
+			Where("id = ?", authCred.ParentId).
+			Update("issued", true).Error; err != nil {
+			return fmt.Errorf("unable to issue jti")
+		}
+	}
+
+	return nil
 }
 
 func (repo *credentialRepo) UndoSetUserToken(ctx context.Context, jti string) error {
@@ -106,6 +115,16 @@ func (repo *credentialRepo) GetLatestUserTokenVersion(ctx context.Context, user 
 		return int(count), fmt.Errorf("unable to get latest version of token family: %s", err)
 	}
 	return int(count), nil
+}
+
+func (repo *credentialRepo) DeleteUserTokenFamily(ctx context.Context, user domain.User) error {
+	if err := repo.db.WithContext(ctx).
+		Delete(&model.AuthorizationCredential{}, "user_id = ?", user.Id).
+		Error; err != nil {
+		return fmt.Errorf("unable to invalidate user token family")
+	}
+
+	return nil
 }
 
 /*

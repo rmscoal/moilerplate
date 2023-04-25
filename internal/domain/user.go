@@ -42,6 +42,13 @@ func (v User) ValidateWithContext(ctx context.Context) error {
 	return nil
 }
 
+func (v User) ValidateUserCredentialsWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, &v,
+		validation.Field(&v.Id, validation.Required, is.UUIDv4),
+		validation.Field(&v.Credential.Tokens.TokenID, validation.Required, is.UUIDv4),
+	)
+}
+
 func (v User) ValidateEmailsWithContext(ctx context.Context) (err error) {
 	for _, email := range v.Emails {
 		vErr := email.Validate()

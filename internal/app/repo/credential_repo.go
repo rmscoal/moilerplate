@@ -15,4 +15,5 @@ type ICredentialRepo interface {
 	SetNewUserToken(ctx context.Context, user domain.User) (vo.UserToken, error)
 	UndoSetUserToken(ctx context.Context, jti string) error
 	GetLatestUserTokenVersion(ctx context.Context, user domain.User) (int, error)
+	DeleteUserTokenFamily(ctx context.Context, user domain.User) error
 }
