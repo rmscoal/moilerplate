@@ -14,7 +14,14 @@ type LoginRequest struct {
 	Password string `json:"password,omitempty"`
 }
 
-type SignUpResponse struct {
-	Token    string `json:"token,omitempty"`
-	Username string `json:"username,omitempty"`
+type TokenResponse struct {
+	AccessToken  string `json:"accessToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
+	Username     string `json:"username,omitempty"`
 }
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refreshToken,omitempty"`
+}
+
+type RefreResponse TokenResponse

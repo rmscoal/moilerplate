@@ -24,16 +24,17 @@ func SignUpRequestToUserDomain(obj dto.SignUpRequest) domain.User {
 	}
 }
 
-func UserDomainToLoginResponse(user domain.User) dto.SignUpResponse {
-	return dto.SignUpResponse{
-		Token:    user.Credential.Token,
-		Username: user.Credential.Username,
-	}
-}
-
 func LoginRequestToUserCredential(obj dto.LoginRequest) vo.UserCredential {
 	return vo.UserCredential{
 		Username: obj.Username,
 		Password: obj.Password,
+	}
+}
+
+func UserDomainToTokenResponse(user domain.User) dto.TokenResponse {
+	return dto.TokenResponse{
+		AccessToken:  user.Credential.Tokens.AccesssToken,
+		RefreshToken: user.Credential.Tokens.RefreshToken,
+		Username:     user.Credential.Username,
 	}
 }

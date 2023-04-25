@@ -50,5 +50,9 @@ func MapUserModelToDomain(user model.User) domain.User {
 		res.Emails = append(res.Emails, email)
 	}
 
+	for _, cred := range user.AuthorizationCredentials {
+		res.Credential.Tokens.TokenID = cred.Id
+	}
+
 	return res
 }

@@ -8,5 +8,6 @@ func GetAllRelationalModels() []any {
 		&User{},
 		&UserCredential{},
 		&UserEmail{},
+		&AuthorizationCredential{},
 	}
 }

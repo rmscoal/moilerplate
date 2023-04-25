@@ -71,7 +71,11 @@ func NewDomainError(domain string, err error) error {
 }
 
 func NewRepositoryError(domain string, err error) error {
-	return NewError(domain, 500, ErrUnexpected, err)
+	return NewError(domain+" Repository", 500, ErrUnexpected, err)
+}
+
+func NewServiceError(domain string, err error) error {
+	return NewError(domain+" Service", 500, ErrUnexpected, err)
 }
 
 func NewNotFoundError(domain string, err error) error {

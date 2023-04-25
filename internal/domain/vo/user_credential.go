@@ -2,13 +2,24 @@
 package vo
 
 import (
+	"time"
+
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type UserCredential struct {
 	Username string
 	Password string
-	Token    string
+	Tokens   UserToken
+}
+
+type UserToken struct {
+	TokenID      string
+	AccesssToken string
+	RefreshToken string
+	Version      int
+	Issued       bool
+	IssuedAt     time.Time
 }
 
 func (v UserCredential) Validate() error {
