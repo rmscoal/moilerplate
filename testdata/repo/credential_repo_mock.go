@@ -26,3 +26,28 @@ func (repo *CredentialRepoMock) GetUserByCredentials(ctx context.Context, cred v
 	args := repo.Called(ctx, cred)
 	return args.Get(0).(domain.User), args.Error(1)
 }
+
+func (repo *CredentialRepoMock) GetUserByJti(ctx context.Context, jti string) (domain.User, error) {
+	args := repo.Called(ctx, jti)
+	return args.Get(0).(domain.User), args.Error(1)
+}
+
+func (repo *CredentialRepoMock) SetNewUserToken(ctx context.Context, user domain.User) (vo.UserToken, error) {
+	args := repo.Called(ctx, user)
+	return args.Get(0).(vo.UserToken), args.Error(1)
+}
+
+func (repo *CredentialRepoMock) UndoSetUserToken(ctx context.Context, jti string) error {
+	args := repo.Called(ctx, jti)
+	return args.Error(0)
+}
+
+func (repo *CredentialRepoMock) GetLatestUserTokenVersion(ctx context.Context, user domain.User) (int, error) {
+	args := repo.Called(ctx, user)
+	return args.Int(0), args.Error(1)
+}
+
+func (repo *CredentialRepoMock) DeleteUserTokenFamily(ctx context.Context, user domain.User) error {
+	args := repo.Called(ctx, user)
+	return args.Error(0)
+}
