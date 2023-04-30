@@ -12,9 +12,9 @@ type DoorkeeperServiceMock struct {
 	mock.Mock
 }
 
-func (service *DoorkeeperServiceMock) HashPassword(pass string) string {
+func (service *DoorkeeperServiceMock) HashPassword(pass string) ([]byte, error) {
 	args := service.Called(pass)
-	return args.String(0)
+	return args.Get(0).([]byte), args.Error(1)
 }
 
 func (service *DoorkeeperServiceMock) VerifyAndParseToken(ctx context.Context, tk string) (string, error) {
@@ -30,4 +30,9 @@ func (service *DoorkeeperServiceMock) GenerateUserTokens(user domain.User) (vo.U
 func (service *DoorkeeperServiceMock) VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error) {
 	args := service.Called(ctx, tk)
 	return args.String(0), args.Error(1)
+}
+
+func (service *DoorkeeperServiceMock) CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error) {
+	args := service.Called(ctx, password, hash)
+	return args.Bool(0), args.Error(1)
 }
