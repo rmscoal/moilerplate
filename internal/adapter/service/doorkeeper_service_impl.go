@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -19,6 +20,11 @@ import (
 var (
 	MinSaltLength int64 = 1 << 5
 	MaxSaltLength int64 = 1 << 6
+)
+
+var (
+	ErrInvalidHashLength = errors.New("invalid hash length")
+	ErrPasswordMismatch  = errors.New("timeout exceeded due to password mismatch")
 )
 
 type doorkeeperService struct {
@@ -38,10 +44,7 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 		return nil, err
 	}
 
-	skipper, err := rand.Int(rand.Reader, big.NewInt(2))
-	if err != nil {
-		return nil, err
-	}
+	skipper, _ := rand.Int(rand.Reader, big.NewInt(2))
 
 	salt := make([]byte, saltLength.Int64()+MinSaltLength)
 	_, err = io.ReadFull(rand.Reader, salt)
@@ -71,6 +74,10 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 }
 
 func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error) {
+	if err := validation.Validate(hash, validation.Required, validation.Length(s.dk.GetHashKeyLen(), s.dk.GetHashKeyLen()+int(MaxSaltLength))); err != nil {
+		return false, ErrInvalidHashLength
+	}
+
 	reportChannel := make(chan bool)
 
 	for i := MinSaltLength; i <= MaxSaltLength; i++ {
@@ -79,7 +86,7 @@ func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password
 
 	select {
 	case <-ctx.Done():
-		return false, fmt.Errorf("timeout exceeded for workers")
+		return false, ErrPasswordMismatch
 	case <-reportChannel:
 		return true, nil
 	}
