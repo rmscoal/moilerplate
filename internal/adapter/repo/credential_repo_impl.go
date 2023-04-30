@@ -32,16 +32,16 @@ func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User)
 	return user, nil
 }
 
-func (repo *credentialRepo) GetUserByCredentials(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	var userModel model.User
 
 	if err := repo.db.
 		WithContext(ctx).
 		Model(&userModel).
-		InnerJoins("UserCredential", repo.db.Where(&model.UserCredential{Username: cred.Username, Password: cred.Password})).
+		InnerJoins("UserCredential", repo.db.Where(&model.UserCredential{Username: username})).
 		First(&userModel).
 		Error; err != nil {
-		return domain.User{}, fmt.Errorf("user not found with given username and password")
+		return domain.User{}, fmt.Errorf("user not found with given username")
 	}
 	// Alternative:
 	// if err := repo.db.

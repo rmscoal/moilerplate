@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
@@ -35,7 +36,8 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 	if err != nil {
 		return user, NewServiceError("USer", err)
 	}
-	user.Credential.SetPasswordFromByte(mixture)
+	user.Credential.SetEncodedPasswordFromByte(mixture)
+
 	user, err = uc.repo.CreateNewUser(ctx, user)
 	if err != nil {
 		return user, NewRepositoryError("User", err)
@@ -51,15 +53,34 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 
 func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
 	var user domain.User
+
+	// Validate request
 	if err := cred.Validate(); err != nil {
 		return user, NewDomainError("Credentials", err)
 	}
 
-	cred.Password = uc.service.HashPassword(cred.Password)
-	user, err := uc.repo.GetUserByCredentials(ctx, cred)
+	// Retrieve the user by its username
+	user, err := uc.repo.GetUserByUsername(ctx, cred.Username)
 	if err != nil {
 		return user, NewNotFoundError("Credentials", err)
 	}
+
+	// Decode user's mixture
+	mixture, err := user.Credential.GetHashMixture()
+	if err != nil {
+		return user, NewDomainError("Credentials", utils.AddError(fmt.Errorf("unable to retrieve user's hash"), err))
+	}
+
+	// Compare password request with users hashed password
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
+	defer cancel()
+	success, err := uc.service.CompareHashAndPassword(ctxWithTimeout, cred.Password, mixture)
+	if err != nil || !success {
+		return user, NewUnauthorizedError(fmt.Errorf("the password does not match"))
+	}
+
+	// TODO: Launch a new goroutine to generate
+	// new user mixture and save it do repo
 
 	user, err = uc.prepareUserTokensGeneration(ctx, user)
 	if err != nil {

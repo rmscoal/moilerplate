@@ -77,6 +77,7 @@ var (
 			Password: "PASSWORD",
 		},
 	}
+
 	// Use this variable for testing unsuccessful cases.
 	// It makes readibility better and understanable.
 	INVALID_USER_DOMAIN = VALID_USER_DOMAIN
@@ -120,12 +121,12 @@ func (suite *CredentialUseCaseTestSuite) TestSignup() {
 
 		// Assumes that it passes all validity repo state checks
 		suite.repo.On("ValidateRepoState", TEST_CTX, VALID_USER_DOMAIN).Return(nil).Once()
+		// Assumes HashPassword call returns the hashed password
+		suite.service.On("HashPassword", "PASSWORD").Return([]byte("HASHED_PASSWORD"), nil).Once()
 		// Assumes that it passes constraint checks while persisting record
 		suite.repo.On("CreateNewUser", TEST_CTX, mock.AnythingOfType("domain.User")).Return(test, nil).Once()
 		// Assumes preparing generating refresh token family done successfully
 		suite.repo.On("SetNewUserToken", TEST_CTX, mock.AnythingOfType("domain.User")).Return(VALID_USER_TOKENS_ONLY_ID, nil).Once()
-		// Assumes HashPassword call returns the hashed password
-		suite.service.On("HashPassword", mock.AnythingOfType("string")).Return("HASHED_PASSWORD").Once()
 		// Assumes HashPassword call successfully return the hashed password
 		suite.service.On("GenerateUserTokens", mock.AnythingOfType("domain.User")).Return(VALID_USER_TOKENS, nil).Once()
 
@@ -168,23 +169,38 @@ func (suite *CredentialUseCaseTestSuite) TestSignup() {
 			assert.ErrorContains(suite.T(), err, "conflict state")
 			assert.Equal(suite.T(), test, user)
 		})
+		suite.Run("Failed Password Hashing", func() {
+			test := VALID_USER_DOMAIN
+
+			// Assumes that it passes all validity repo state checks
+			suite.repo.On("ValidateRepoState", TEST_CTX, VALID_USER_DOMAIN).Return(nil).Once()
+			// Assumes HashPassword call returns the hashed password
+			suite.service.On("HashPassword", "PASSWORD").Return([]byte(nil), errors.New("failed to hash password")).Once()
+
+			// Start sign up test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.SignUp(TEST_CTX, test)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "something unexpected had occured")
+			assert.Equal(suite.T(), user, test)
+		})
 	})
 }
 
 func (suite *CredentialUseCaseTestSuite) TestLogin() {
 	suite.Run("Successful Login", func() {
 		test := VALID_USER_DOMAIN
+		testWithEncodedHashedPassword := VALID_USER_DOMAIN_WITH_ID
+		testWithEncodedHashedPassword.Credential.SetEncodedPasswordFromByte([]byte("HASHED_PASSWORD"))
 
-		// Assumptions for hash password
-		suite.service.On("HashPassword", test.Credential.Password).Return("HASHED_PASSWORD").Once()
-		// Now test's password is hashed
-		test.Credential.Password = "HASHED_PASSWORD"
-		// Assumes no error on getting the user by credentials
-		suite.repo.On("GetUserByCredentials", TEST_CTX, test.Credential).Return(VALID_USER_DOMAIN_WITH_ID, nil).Once()
-		// Now test should have an ID
-		test = VALID_USER_DOMAIN_WITH_ID
-		// Assumes generating refersh token id flawlessly
-		suite.repo.On("SetNewUserToken", TEST_CTX, VALID_USER_DOMAIN_WITH_ID).Return(VALID_USER_TOKENS_ONLY_ID, nil).Once()
+		// Assumes that test's username exists in repository
+		suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(testWithEncodedHashedPassword, nil).Once()
+		// Now test is a valid user domain with ID with an encoded hashed password
+		test = testWithEncodedHashedPassword
+		// Assumes that the incoming password request matches the hash
+		suite.service.On("CompareHashAndPassword", mock.Anything, test.Credential.Password, []byte("HASHED_PASSWORD")).Return(true, nil).Once()
+		// Assumes generates refresh token flawlessly
+		suite.repo.On("SetNewUserToken", TEST_CTX, testWithEncodedHashedPassword).Return(VALID_USER_TOKENS_ONLY_ID, nil).Once()
 		// Now test tokens have an ID
 		test.Credential.Tokens = VALID_USER_TOKENS_ONLY_ID
 		// Assumes generation run well
@@ -208,15 +224,11 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 			assert.Empty(suite.T(), user)
 		})
 
-		suite.Run("User's Credential Not Found", func() {
+		suite.Run("User's Username Not Found", func() {
 			test := INVALID_USER_DOMAIN
 
-			// Assumptions for hash password
-			suite.service.On("HashPassword", test.Credential.Password).Return("HASHED_PASSWORD").Once()
-			// Now test's password is hashed
-			test.Credential.Password = "HASHED_PASSWORD"
-			// Assumes user's credentials not found in repo
-			suite.repo.On("GetUserByCredentials", TEST_CTX, test.Credential).Return(domain.User{}, fmt.Errorf("user not found")).Once()
+			// Assumes username is not found
+			suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(domain.User{}, fmt.Errorf("username not found")).Once()
 
 			// Start login test
 			uc := NewCredentialUseCase(suite.repo, suite.service)
@@ -227,19 +239,55 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 			assert.Empty(suite.T(), user)
 		})
 
-		suite.Run("Failed while creating token family", func() {
+		suite.Run("Failed to Decode Password", func() {
 			test := VALID_USER_DOMAIN
+			testWithEncodedHashedPassword := VALID_USER_DOMAIN_WITH_ID
+			testWithEncodedHashedPassword.Credential.Password = "BAD_ENCODING"
 
-			// Assumptions for hash password
-			suite.service.On("HashPassword", test.Credential.Password).Return("HASHED_PASSWORD").Once()
-			// Now test's password is hashed
-			test.Credential.Password = "HASHED_PASSWORD"
-			// Assumes no error on getting the user by credentials
-			suite.repo.On("GetUserByCredentials", TEST_CTX, test.Credential).Return(VALID_USER_DOMAIN_WITH_ID, nil).Once()
-			// Now test should have an ID
-			test = VALID_USER_DOMAIN_WITH_ID
-			// Assumes generating refersh token id failed
-			suite.repo.On("SetNewUserToken", TEST_CTX, VALID_USER_DOMAIN_WITH_ID).Return(vo.UserToken{}, fmt.Errorf("cannot set new token")).Once()
+			// Assumes username is found
+			suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(testWithEncodedHashedPassword, nil).Once()
+
+			// Start login test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Login(TEST_CTX, INVALID_USER_DOMAIN.Credential)
+			assert.Error(suite.T(), err)
+			assert.ErrorIs(suite.T(), err.(AppError).Type, ErrUnprocessableEntity)
+			assert.ErrorContains(suite.T(), err, "unable to process entity")
+			assert.Equal(suite.T(), testWithEncodedHashedPassword, user)
+		})
+
+		suite.Run("Compare Password and Hash Failed", func() {
+			test := INVALID_USER_DOMAIN
+			testWithEncodedHashedPassword := VALID_USER_DOMAIN_WITH_ID
+			testWithEncodedHashedPassword.Credential.SetEncodedPasswordFromByte([]byte("HASHED_PASSWORD"))
+
+			// Assumes username is found
+			suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(testWithEncodedHashedPassword, nil).Once()
+			// Assumes that the password is wrong
+			suite.service.On("CompareHashAndPassword", mock.Anything, test.Credential.Password, []byte("HASHED_PASSWORD")).Return(false, fmt.Errorf("password does not match")).Once()
+
+			// Start login test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Login(TEST_CTX, INVALID_USER_DOMAIN.Credential)
+			assert.Error(suite.T(), err)
+			assert.Equal(suite.T(), testWithEncodedHashedPassword, user)
+			assert.ErrorIs(suite.T(), err.(AppError).Type, ErrUnauthorized)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+		})
+
+		suite.Run("Failed Creating Token Family", func() {
+			test := VALID_USER_DOMAIN
+			testWithEncodedHashedPassword := VALID_USER_DOMAIN_WITH_ID
+			testWithEncodedHashedPassword.Credential.SetEncodedPasswordFromByte([]byte("HASHED_PASSWORD"))
+
+			// Assumes that the test's username exists in repository
+			suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(testWithEncodedHashedPassword, nil).Once()
+			// Now the test is a valid user with id and encoded hashed password
+			test = testWithEncodedHashedPassword
+			// Assumes that the password matches
+			suite.service.On("CompareHashAndPassword", mock.Anything, VALID_USER_DOMAIN.Credential.Password, []byte("HASHED_PASSWORD")).Return(true, nil).Once()
+			// Assumes set new token fails
+			suite.repo.On("SetNewUserToken", TEST_CTX, test).Return(vo.UserToken{}, fmt.Errorf("repo error")).Once()
 
 			// Start login test
 			uc := NewCredentialUseCase(suite.repo, suite.service)
@@ -252,17 +300,17 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 
 		suite.Run("Failed on Token Generation", func() {
 			test := VALID_USER_DOMAIN
+			testWithEncodedHashedPassword := VALID_USER_DOMAIN_WITH_ID
+			testWithEncodedHashedPassword.Credential.SetEncodedPasswordFromByte([]byte("HASHED_PASSWORD"))
 
-			// Assumptions for hash password
-			suite.service.On("HashPassword", test.Credential.Password).Return("HASHED_PASSWORD").Once()
-			// Now test's password is hashed
-			test.Credential.Password = "HASHED_PASSWORD"
-			// Assumes no error on getting the user by credentials
-			suite.repo.On("GetUserByCredentials", TEST_CTX, test.Credential).Return(VALID_USER_DOMAIN_WITH_ID, nil).Once()
-			// Now test should have an ID
-			test = VALID_USER_DOMAIN_WITH_ID
-			// Assumes generating refersh token id flawlessly
-			suite.repo.On("SetNewUserToken", TEST_CTX, VALID_USER_DOMAIN_WITH_ID).Return(VALID_USER_TOKENS_ONLY_ID, nil).Once()
+			// Assumes that the test's username exists in repository
+			suite.repo.On("GetUserByUsername", TEST_CTX, test.Credential.Username).Return(testWithEncodedHashedPassword, nil).Once()
+			// Now the test is a valid user with id and encoded hashed password
+			test = testWithEncodedHashedPassword
+			// Assumes that the password matches
+			suite.service.On("CompareHashAndPassword", mock.Anything, VALID_USER_DOMAIN.Credential.Password, []byte("HASHED_PASSWORD")).Return(true, nil).Once()
+			// Assumes set new token fails
+			suite.repo.On("SetNewUserToken", TEST_CTX, test).Return(VALID_USER_TOKENS_ONLY_ID, nil).Once()
 			// Now test tokens have an ID
 			test.Credential.Tokens = VALID_USER_TOKENS_ONLY_ID
 			// Assumes token generation and undoing fails

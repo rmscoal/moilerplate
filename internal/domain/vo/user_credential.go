@@ -30,6 +30,10 @@ func (v UserCredential) Validate() error {
 	)
 }
 
-func (u *UserCredential) SetPasswordFromByte(pass []byte) {
+func (u *UserCredential) SetEncodedPasswordFromByte(pass []byte) {
 	u.Password = base64.StdEncoding.EncodeToString(pass)
+}
+
+func (u UserCredential) GetHashMixture() ([]byte, error) {
+	return base64.StdEncoding.DecodeString(u.Password)
 }
