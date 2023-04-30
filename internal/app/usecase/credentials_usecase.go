@@ -76,7 +76,7 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	defer cancel()
 	success, err := uc.service.CompareHashAndPassword(ctxWithTimeout, cred.Password, mixture)
 	if err != nil || !success {
-		return user, NewUnauthorizedError(fmt.Errorf("the password does not match"))
+		return user, NewUnauthorizedError(utils.AddError(fmt.Errorf("the password does not match"), err))
 	}
 
 	// TODO: Launch a new goroutine to generate

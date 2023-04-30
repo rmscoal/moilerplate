@@ -107,6 +107,7 @@ func (s *doorkeeperService) extractFromMixtures(hashToExtract []byte, skipper in
 	for i := 0; i < len(hashToExtract); i++ {
 		if i == skipperIdx && len(saltCollected) < int(lengthOfSalt) {
 			saltCollected = append(saltCollected, hashToExtract[i])
+			skipperIdx += skipper + 1
 		} else {
 			hashCollected = append(hashCollected, hashToExtract[i])
 		}
@@ -115,7 +116,7 @@ func (s *doorkeeperService) extractFromMixtures(hashToExtract []byte, skipper in
 }
 
 func (s *doorkeeperService) compareHashes(password string, salt, hashToCompare []byte) bool {
-	hash := pbkdf2.Key([]byte(password), salt, s.dk.GetHashIter(), s.dk.GetHashIter(), s.dk.GetHasherFunc())
+	hash := pbkdf2.Key([]byte(password), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
 
 	if len(hashToCompare) != len(hash) {
 		return false
