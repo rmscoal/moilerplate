@@ -1,30 +1,17 @@
 package doorkeeper
 
 import (
-	"crypto"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/sha3"
 )
 
 // Option -.
 type Option func(*Doorkeeper)
-
-func RegisterSecretKey(key string) Option {
-	return func(d *Doorkeeper) {
-		if key != "" {
-			d.secret = key
-		}
-	}
-}
-
-func RegisterSalt(salt string) Option {
-	return func(d *Doorkeeper) {
-		if salt != "" {
-			d.salt = salt
-		}
-	}
-}
 
 func RegisterPath(path string) Option {
 	return func(d *Doorkeeper) {
@@ -32,10 +19,18 @@ func RegisterPath(path string) Option {
 	}
 }
 
-func RegisterDuration(t time.Duration) Option {
+func RegisterAccessDuration(t time.Duration) Option {
 	return func(d *Doorkeeper) {
 		if t > 0 {
-			d.Duration = t
+			d.AccessDuration = t
+		}
+	}
+}
+
+func RegisterRefreshDuration(t time.Duration) Option {
+	return func(d *Doorkeeper) {
+		if t > 0 {
+			d.RefreshDuration = t
 		}
 	}
 }
@@ -46,31 +41,27 @@ func RegisterIssuer(iss string) Option {
 	}
 }
 
-func RegisterHashMethod(alg string) Option {
+func RegisterHasherFunc(alg string) Option {
 	return func(d *Doorkeeper) {
 		switch alg {
-		case "MD4":
-			d.hashMethod = crypto.MD4
-		case "MD5":
-			d.hashMethod = crypto.MD5
 		case "SHA1":
-			d.hashMethod = crypto.SHA1
+			d.hasherFunc = sha1.New
 		case "SHA224":
-			d.hashMethod = crypto.SHA224
+			d.hasherFunc = sha256.New224
 		case "SHA256":
-			d.hashMethod = crypto.SHA256
+			d.hasherFunc = sha256.New
 		case "SHA384":
-			d.hashMethod = crypto.SHA384
+			d.hasherFunc = sha512.New384
 		case "SHA512":
-			d.hashMethod = crypto.SHA512
+			d.hasherFunc = sha512.New
 		case "SHA3_224":
-			d.hashMethod = crypto.SHA3_224
+			d.hasherFunc = sha3.New224
 		case "SHA3_256":
-			d.hashMethod = crypto.SHA3_256
+			d.hasherFunc = sha3.New256
 		case "SHA3_384":
-			d.hashMethod = crypto.SHA3_384
+			d.hasherFunc = sha3.New384
 		case "SHA3_512":
-			d.hashMethod = crypto.SHA3_512
+			d.hasherFunc = sha3.New512
 		}
 	}
 }

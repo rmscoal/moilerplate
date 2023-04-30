@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"io"
+	"math/big"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -10,6 +13,12 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
+	"golang.org/x/crypto/pbkdf2"
+)
+
+var (
+	MinSaltLength int64 = 1 << 5
+	MaxSaltLength int64 = 1 << 6
 )
 
 type doorkeeperService struct {
@@ -20,14 +29,109 @@ func NewDoorkeeperService(dk *doorkeeper.Doorkeeper) *doorkeeperService {
 	return &doorkeeperService{dk}
 }
 
-func (s *doorkeeperService) HashPassword(pass string) string {
-	h := s.dk.GetHasMethod().New()
-	h.Write([]byte(pass))
-	res := h.Sum([]byte(s.dk.GetSalt()))
+/*
+---------- Hashing Section ----------
+*/
+func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
+	saltLength, err := rand.Int(rand.Reader, big.NewInt(MaxSaltLength-MinSaltLength))
+	if err != nil {
+		return nil, err
+	}
 
-	return fmt.Sprintf("%x", res)
+	skipper, err := rand.Int(rand.Reader, big.NewInt(2))
+	if err != nil {
+		return nil, err
+	}
+
+	salt := make([]byte, saltLength.Int64()+MinSaltLength)
+	_, err = io.ReadFull(rand.Reader, salt)
+	if err != nil {
+		return nil, err
+	}
+
+	hash := pbkdf2.Key([]byte(pass), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
+
+	mixture := make([]byte, len(salt)+len(hash))
+
+	skipperIdx := 0
+	saltIdx := 0
+	hashIdx := 0
+	for i := 0; i < len(salt)+len(hash); i++ {
+		if i == skipperIdx && saltIdx < len(salt) {
+			mixture[i] = salt[saltIdx]
+			skipperIdx += int(skipper.Int64()) + 1
+			saltIdx++
+		} else if hashIdx < len(hash) {
+			mixture[i] = hash[hashIdx]
+			hashIdx++
+		}
+	}
+
+	return mixture, nil
 }
 
+func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error) {
+	reportChannel := make(chan bool)
+
+	for i := MinSaltLength; i <= MaxSaltLength; i++ {
+		go s.compareWorker(ctx, password, hash, i, reportChannel)
+	}
+
+	select {
+	case <-ctx.Done():
+		return false, fmt.Errorf("timeout exceeded for workers")
+	case <-reportChannel:
+		return true, nil
+	}
+}
+
+func (s *doorkeeperService) compareWorker(ctx context.Context, password string, hashToExtract []byte, lengthOfSalt int64, reportChannel chan<- bool) {
+	for i := 0; i < 2; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			saltPrediction, hashPrediction := s.extractFromMixtures(hashToExtract, i, lengthOfSalt)
+			if s.compareHashes(password, saltPrediction, hashPrediction) {
+				reportChannel <- true
+				return
+			}
+		}
+	}
+}
+
+func (s *doorkeeperService) extractFromMixtures(hashToExtract []byte, skipper int, lengthOfSalt int64) ([]byte, []byte) {
+	skipperIdx := 0
+	saltCollected := make([]byte, 0, lengthOfSalt)
+	hashCollected := make([]byte, 0, s.dk.GetHashKeyLen())
+	for i := 0; i < len(hashToExtract); i++ {
+		if i == skipperIdx && len(saltCollected) < int(lengthOfSalt) {
+			saltCollected = append(saltCollected, hashToExtract[i])
+		} else {
+			hashCollected = append(hashCollected, hashToExtract[i])
+		}
+	}
+	return saltCollected, hashCollected
+}
+
+func (s *doorkeeperService) compareHashes(password string, salt, hashToCompare []byte) bool {
+	hash := pbkdf2.Key([]byte(password), salt, s.dk.GetHashIter(), s.dk.GetHashIter(), s.dk.GetHasherFunc())
+
+	if len(hashToCompare) != len(hash) {
+		return false
+	}
+
+	for i := 0; i < len(hash); i++ {
+		if hash[i] != hashToCompare[i] {
+			return false
+		}
+	}
+	return true
+}
+
+/*
+---------- JWT Section ----------
+*/
 func (s *doorkeeperService) GenerateUserTokens(user domain.User) (vo.UserToken, error) {
 	var userToken vo.UserToken
 
@@ -51,7 +155,7 @@ func (s *doorkeeperService) GenerateAccessToken(user domain.User) (res string, e
 	now := user.Credential.Tokens.IssuedAt.UTC()
 	claims := jwt.MapClaims{
 		"iss":    s.dk.GetIssuer(),
-		"eat":    now.Add(s.dk.Duration).Unix(),
+		"eat":    now.Add(s.dk.AccessDuration).Unix(),
 		"iat":    now.Unix(),
 		"userId": user.Id,
 		"nbf":    now.Unix(),
@@ -69,7 +173,7 @@ func (s *doorkeeperService) GenerateRefreshToken(user domain.User) (rt string, e
 
 	claims := jwt.MapClaims{
 		"iss": s.dk.GetIssuer(),
-		"eat": now.Add(time.Hour /* use: s.dk.RefreshDuration */).Unix(),
+		"eat": now.Add(s.dk.RefreshDuration).Unix(),
 		"iat": now.Unix(),
 		"jti": user.Credential.Tokens.TokenID,
 		"nbf": now.Unix(),

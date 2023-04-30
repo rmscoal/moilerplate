@@ -8,7 +8,8 @@ import (
 )
 
 type IDoorkeeperService interface {
-	HashPassword(pass string) string
+	HashPassword(pass string) ([]byte, error)
+	CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error)
 	GenerateUserTokens(user domain.User) (vo.UserToken, error)
 	VerifyAndParseToken(ctx context.Context, tk string) (string, error)
 	VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error)

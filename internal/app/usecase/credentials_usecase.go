@@ -31,8 +31,12 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 		return user, NewConflictError("User", err)
 	}
 
-	user.Credential.Password = uc.service.HashPassword(user.Credential.Password)
-	user, err := uc.repo.CreateNewUser(ctx, user)
+	mixture, err := uc.service.HashPassword(user.Credential.Password)
+	if err != nil {
+		return user, NewServiceError("USer", err)
+	}
+	user.Credential.SetPasswordFromByte(mixture)
+	user, err = uc.repo.CreateNewUser(ctx, user)
 	if err != nil {
 		return user, NewRepositoryError("User", err)
 	}
@@ -85,6 +89,7 @@ func (uc *credentialUseCase) Authorize(ctx context.Context, token string) (domai
 //
 // 4. Generate a new version record on the repo
 // 5. Generate the tokens
+// See: https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/
 func (uc *credentialUseCase) Refresh(ctx context.Context, refreshToken string) (domain.User, error) {
 	jti, err := uc.service.VerifyAndParseRefreshToken(ctx, refreshToken)
 	if err != nil {

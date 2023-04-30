@@ -26,12 +26,11 @@ func Run(cfg *config.Config) {
 	logger := logger.NewAppLogger(cfg.App.LogPath)
 
 	dk := doorkeeper.GetDoorkeeper(
-		doorkeeper.RegisterSecretKey(cfg.Doorkeeper.SecretKey()),
-		doorkeeper.RegisterSalt(cfg.Doorkeeper.HashSalt()),
-		doorkeeper.RegisterHashMethod(cfg.Doorkeeper.HashMethod()),
-		doorkeeper.RegisterSignMethod(cfg.Doorkeeper.SigningMethod(), cfg.Doorkeeper.SigningSize()),
+		doorkeeper.RegisterHasherFunc(cfg.Doorkeeper.HashMethod),
+		doorkeeper.RegisterSignMethod(cfg.Doorkeeper.SigningMethod, cfg.Doorkeeper.SignSize),
 		doorkeeper.RegisterIssuer(cfg.Doorkeeper.Issuer),
-		doorkeeper.RegisterDuration(cfg.Doorkeeper.Duration),
+		doorkeeper.RegisterAccessDuration(cfg.Doorkeeper.AccessDuration),
+		doorkeeper.RegisterRefreshDuration(cfg.Doorkeeper.RefreshDuration),
 		doorkeeper.RegisterPath(cfg.Doorkeeper.Path),
 	)
 

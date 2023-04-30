@@ -6,16 +6,16 @@
 // is boring, there's far less room for implementers to make
 // cataclysmic mistakes (such as repeating an ECDSA nonce).
 
-// Cryptographers are working hard to bring boring cryptography to the masses. Paragon Initiative Enterprises is similarly working hard to bring boring levels of security to PHP. That is why we're building Airship: The PHP community deserves a CMS/blogging platform that is obviously secure, written from an understanding of how PHP applications are attacked in the real world.
-
 // Remember, "Attacks only get better; they never get worse."
 
 package doorkeeper
 
 import (
 	"crypto"
-	"io/ioutil"
+	"crypto/sha512"
+	"hash"
 	"log"
+	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -24,18 +24,19 @@ import (
 )
 
 type Doorkeeper struct {
-	signMethod jwt.SigningMethod
-	hashMethod crypto.Hash
+	// --- JWT ---
+	signMethod      jwt.SigningMethod // This will be used for JWS / JWE
+	path            string            // Stores the path to the certification keys
+	privKey         interface{}       // Stores the private keys parsed from PEM (if asymmetric)
+	pubKey          interface{}       // Stores the public keys parsed from PEM (if symmetric)
+	issuer          string            // *Claims*
+	AccessDuration  time.Duration     // Duration of an access token
+	RefreshDuration time.Duration     // Duration of a refresh token
 
-	path string
-
-	issuer  string
-	secret  string
-	salt    string
-	privKey any
-	pubKey  any
-
-	Duration time.Duration
+	// --- Password Hasher ---
+	hasherFunc func() hash.Hash // This will be used as the hashing method (may on top of PBKD2F)
+	hashKeyLen int              // Special case for PBKD2F key length
+	hashIter   int              // Special case for PBKD2F iterator
 }
 
 var (
@@ -47,11 +48,12 @@ var (
 )
 
 var (
-	_defaultHashMethod    = crypto.SHA256
-	_defaultSigningMethod = jwt.SigningMethodHS384
-	_defaultSecretKey     = "secretKey" // this value should always be replace by passing options
-	_defaultSalt          = "saltKey"   // this value should always be replace by passing options
-	_defaultDuration      = 15 * time.Minute
+	_defaultHasherFunc      = sha512.New384
+	_defaultHashKeyLen      = 64
+	_defaultHashIter        = 4096
+	_defaultSigningMethod   = jwt.SigningMethodHS384
+	_defaultAccessDuration  = 15 * time.Minute
+	_defaultRefreshDuration = 1 * time.Hour
 )
 
 var (
@@ -63,11 +65,12 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 	if doorkeeperSingleInstance == nil {
 		once.Do(func() {
 			doorkeeperSingleInstance = &Doorkeeper{
-				Duration:   _defaultDuration,
-				hashMethod: _defaultHashMethod,
-				signMethod: _defaultSigningMethod,
-				secret:     _defaultSecretKey,
-				salt:       _defaultSalt,
+				AccessDuration:  _defaultAccessDuration,
+				RefreshDuration: _defaultRefreshDuration,
+				hasherFunc:      _defaultHasherFunc,
+				hashKeyLen:      _defaultHashKeyLen,
+				hashIter:        _defaultHashIter,
+				signMethod:      _defaultSigningMethod,
 			}
 
 			for _, opt := range opts {
@@ -81,27 +84,31 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 	return doorkeeperSingleInstance
 }
 
-func (d *Doorkeeper) GetIssuer() string {
-	return d.issuer
+func (d *Doorkeeper) GetHasherFunc() func() hash.Hash {
+	return d.hasherFunc
 }
 
-func (d *Doorkeeper) GetSalt() string {
-	return d.salt
+func (d *Doorkeeper) GetHashKeyLen() int {
+	return d.hashKeyLen
+}
+
+func (d *Doorkeeper) GetHashIter() int {
+	return d.hashIter
+}
+
+func (d *Doorkeeper) GetIssuer() string {
+	return d.issuer
 }
 
 func (d *Doorkeeper) GetSignMethod() jwt.SigningMethod {
 	return d.signMethod
 }
 
-func (d *Doorkeeper) GetHasMethod() crypto.Hash {
-	return d.hashMethod
-}
-
-func (d *Doorkeeper) GetPubKey() any {
+func (d *Doorkeeper) GetPubKey() interface{} {
 	return d.pubKey
 }
 
-func (d *Doorkeeper) GetPrivKey() any {
+func (d *Doorkeeper) GetPrivKey() interface{} {
 	return d.privKey
 }
 
@@ -112,28 +119,38 @@ func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
 func (d *Doorkeeper) loadSecretKeys() {
 	switch d.GetConcreteSignMethod() {
 	case HMAC_SIGN_METHOD_TYPE:
-		d.privKey, d.pubKey = []byte(d.secret), []byte(d.secret)
+		d.privKey = d.getSymmetricKeyFromFile("id_secret")
+		d.pubKey = d.privKey
 	case RSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
+		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_rsa")
 		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
 	case RSAPSS_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getKeyFromFile("id_rsa")
+		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_rsa")
 		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
 	case ECDSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ecdsa")
+		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_ecdsa")
 		d.privKey, d.pubKey = d.parseECKeysFromPem(privKeyByte, pubKeyByte)
 	case EdDSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getKeyFromFile("id_ed2559")
+		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_ed2559")
 		d.privKey, d.pubKey = d.parseEdKeysFromPem(privKeyByte, pubKeyByte)
 	}
 }
 
-func (d *Doorkeeper) getKeyFromFile(fileName string) ([]byte, []byte) {
-	privKey, err := ioutil.ReadFile(d.path + "/" + fileName)
+func (d *Doorkeeper) getSymmetricKeyFromFile(filename string) []byte {
+	key, err := os.ReadFile(d.path + "/" + filename)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	pubKey, err := ioutil.ReadFile(d.path + "/" + fileName + ".pub")
+
+	return key
+}
+
+func (d *Doorkeeper) getAsymmetricKeysFromFile(filename string) ([]byte, []byte) {
+	privKey, err := os.ReadFile(d.path + "/" + filename)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	pubKey, err := os.ReadFile(d.path + "/" + filename + ".pub")
 	if err != nil {
 		log.Fatalln(err)
 	}

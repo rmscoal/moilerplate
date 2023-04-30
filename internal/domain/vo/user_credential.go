@@ -2,6 +2,7 @@
 package vo
 
 import (
+	"encoding/base64"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -27,4 +28,8 @@ func (v UserCredential) Validate() error {
 		validation.Field(&v.Username, validation.Required, validation.Length(3, 20)),
 		validation.Field(&v.Password, validation.Required),
 	)
+}
+
+func (u *UserCredential) SetPasswordFromByte(pass []byte) {
+	u.Password = base64.StdEncoding.EncodeToString(pass)
 }
