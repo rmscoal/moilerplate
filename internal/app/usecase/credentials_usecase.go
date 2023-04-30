@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
@@ -79,13 +80,12 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 		return user, NewUnauthorizedError(utils.AddError(fmt.Errorf("the password does not match"), err))
 	}
 
-	// TODO: Launch a new goroutine to generate
-	// new user mixture and save it do repo
-
 	user, err = uc.prepareUserTokensGeneration(ctx, user)
 	if err != nil {
 		return user, err
 	}
+
+	go uc.generateNewHashMixture(user.Id, cred.Password)
 
 	return user, nil
 }
@@ -176,4 +176,23 @@ func (uc *credentialUseCase) lockDownUser(ctx context.Context, user domain.User)
 		return NewRepositoryError("Credentials", err)
 	}
 	return nil
+}
+
+// generateNewHashMixture method creates a new hash
+// mixture from user's password. Set this up with
+// goroutine after signin in.
+func (uc *credentialUseCase) generateNewHashMixture(id, password string) {
+	user := domain.User{Id: id, Credential: vo.UserCredential{Password: password}}
+
+	mixture, err := uc.service.HashPassword(user.Credential.Password)
+	if err != nil {
+		log.Printf("failed to generate new hash password for user id: %s", id)
+	}
+	user.Credential.SetEncodedPasswordFromByte(mixture)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	if err := uc.repo.RotateUserHashPassword(ctx, user); err != nil {
+		log.Printf("failed to save user hash rotation for user id: %s", id)
+	}
 }

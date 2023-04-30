@@ -127,6 +127,21 @@ func (repo *credentialRepo) DeleteUserTokenFamily(ctx context.Context, user doma
 	return nil
 }
 
+func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user domain.User) error {
+	tx := repo.db.WithContext(ctx).Begin()
+
+	if err := tx.Model(&model.UserCredential{}).
+		Where(&model.UserCredential{UserId: user.Id}).
+		Update("password", user.Credential.Password).
+		Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
 /*
 *************************************************
 REPO VALIDATIONS IMPLEMENTATIONS

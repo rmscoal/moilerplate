@@ -16,4 +16,5 @@ type ICredentialRepo interface {
 	UndoSetUserToken(ctx context.Context, jti string) error
 	GetLatestUserTokenVersion(ctx context.Context, user domain.User) (int, error)
 	DeleteUserTokenFamily(ctx context.Context, user domain.User) error
+	RotateUserHashPassword(ctx context.Context, user domain.User) error
 }
