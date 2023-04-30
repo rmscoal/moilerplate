@@ -13,9 +13,9 @@ import (
 // Option -.
 type Option func(*Doorkeeper)
 
-func RegisterPath(path string) Option {
+func RegisterCertPath(path string) Option {
 	return func(d *Doorkeeper) {
-		d.path = path
+		d.certPath = path
 	}
 }
 

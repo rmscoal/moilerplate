@@ -26,7 +26,7 @@ import (
 type Doorkeeper struct {
 	// --- JWT ---
 	signMethod      jwt.SigningMethod // This will be used for JWS / JWE
-	path            string            // Stores the path to the certification keys
+	certPath        string            // Stores the path to the certification keys
 	privKey         interface{}       // Stores the private keys parsed from PEM (if asymmetric)
 	pubKey          interface{}       // Stores the public keys parsed from PEM (if symmetric)
 	issuer          string            // *Claims*
@@ -137,7 +137,7 @@ func (d *Doorkeeper) loadSecretKeys() {
 }
 
 func (d *Doorkeeper) getSymmetricKeyFromFile(filename string) []byte {
-	key, err := os.ReadFile(d.path + "/" + filename)
+	key, err := os.ReadFile(d.certPath + "/" + filename)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -146,11 +146,11 @@ func (d *Doorkeeper) getSymmetricKeyFromFile(filename string) []byte {
 }
 
 func (d *Doorkeeper) getAsymmetricKeysFromFile(filename string) ([]byte, []byte) {
-	privKey, err := os.ReadFile(d.path + "/" + filename)
+	privKey, err := os.ReadFile(d.certPath + "/" + filename)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	pubKey, err := os.ReadFile(d.path + "/" + filename + ".pub")
+	pubKey, err := os.ReadFile(d.certPath + "/" + filename + ".pub")
 	if err != nil {
 		log.Fatalln(err)
 	}

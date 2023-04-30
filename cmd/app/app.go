@@ -31,7 +31,7 @@ func Run(cfg *config.Config) {
 		doorkeeper.RegisterIssuer(cfg.Doorkeeper.Issuer),
 		doorkeeper.RegisterAccessDuration(cfg.Doorkeeper.AccessDuration),
 		doorkeeper.RegisterRefreshDuration(cfg.Doorkeeper.RefreshDuration),
-		doorkeeper.RegisterPath(cfg.Doorkeeper.Path),
+		doorkeeper.RegisterCertPath(cfg.Doorkeeper.Path),
 	)
 
 	rt := rater.GetRater(context.Background(),
