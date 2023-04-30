@@ -207,6 +207,9 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 		suite.service.On("GenerateUserTokens", test).Return(VALID_USER_TOKENS, nil).Once()
 		// Now test has complete tokens
 		test.Credential.Tokens = VALID_USER_TOKENS
+		// goroutines mocks for generateNewHashMixture
+		suite.service.On("HashPassword", test.Credential.Password).Return([]byte("HASHED_PASSWORD"), nil)
+		suite.repo.On("RotateUserHashPassword", mock.Anything, domain.User{Id: test.Id, Credential: vo.UserCredential{Password: test.Credential.Password}}).Return(nil)
 
 		// Start login test
 		uc := NewCredentialUseCase(suite.repo, suite.service)

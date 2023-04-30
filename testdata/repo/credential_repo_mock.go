@@ -51,3 +51,8 @@ func (repo *CredentialRepoMock) DeleteUserTokenFamily(ctx context.Context, user 
 	args := repo.Called(ctx, user)
 	return args.Error(0)
 }
+
+func (repo *CredentialRepoMock) RotateUserHashPassword(ctx context.Context, user domain.User) error {
+	args := repo.Called(ctx, user)
+	return args.Error(0)
+}
