@@ -303,5 +303,5 @@ func (s *doorkeeperService) validateKeys(ctx context.Context, obj map[string]any
 		index++
 	}
 
-	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.Required, validation.In(args...)))
+	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.Required, validation.In(args...).Error("does not contained required claim")))
 }
