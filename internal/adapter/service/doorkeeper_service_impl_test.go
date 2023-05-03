@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// TESTING VARIABLES
 var (
 	// Context for testing
 	TEST_CONTEXT = context.Background()
@@ -27,6 +29,9 @@ var (
 		}},
 	}
 )
+
+// BENCHMARK VARIABLES
+var passwordTestCases = []string{"password", "mediumpassword", "verylongpassword", "nvsjvn&#*@jdsnvvavakac#@HBSDVs"}
 
 type DoorkeeperServiceImplTestSuite struct {
 	suite.Suite
@@ -48,6 +53,16 @@ func (suite *DoorkeeperServiceImplTestSuite) SetupTest() {
 	suite.service = NewDoorkeeperService(suite.dk)
 }
 
+func (suite *DoorkeeperServiceImplTestSuite) SetupSuite() {}
+
+func (suite *DoorkeeperServiceImplTestSuite) TearDownTest() {
+	suite.dk = nil
+	suite.service = nil
+}
+
+func (suite *DoorkeeperServiceImplTestSuite) TearDownSuite() {}
+
+// ------ TESTING SECTION ------
 func TestDoorkeeperService(t *testing.T) {
 	suite.Run(t, new(DoorkeeperServiceImplTestSuite))
 }
@@ -72,8 +87,7 @@ func (suite *DoorkeeperServiceImplTestSuite) TestHashPassword() {
 		// the os side.
 		MinSaltLength, MaxSaltLength = MaxSaltLength, MinSaltLength
 
-		var f assert.PanicTestFunc
-		f = func() {
+		f := func() {
 			suite.service.HashPassword("password")
 		}
 		assert.Panics(suite.T(), f)
@@ -259,4 +273,28 @@ func (suite *DoorkeeperServiceImplTestSuite) TestVerifyParseRefreshToken() {
 			assert.ErrorContains(suite.T(), err, "does not contained required claim")
 		})
 	})
+}
+
+// ------ BENCHMARK SECTION ------
+
+// go test ./internal/adapter/service -bench=Benchmark -count=5 -benchtime=100x -benchmem -run=^#
+func BenchmarkHashPassword(b *testing.B) {
+	s := new(DoorkeeperServiceImplTestSuite)
+	s.SetT(&testing.T{})
+	s.SetupSuite()
+	for _, password := range passwordTestCases {
+		b.ResetTimer()
+		b.Run(fmt.Sprintf("password_of_%s", password), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				s.SetupTest()
+				b.StartTimer()
+
+				s.service.HashPassword(password)
+
+				b.StopTimer()
+				s.TearDownTest()
+			}
+		})
+	}
+	s.TearDownSuite()
 }
