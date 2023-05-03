@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -52,24 +53,11 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 		return nil, err
 	}
 
-	hash := pbkdf2.Key([]byte(pass), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
+	mixture := pbkdf2.Key([]byte(pass), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
 
-	mixture := make([]byte, len(salt)+len(hash))
-
-	skipperIdx := 0
-	saltIdx := 0
-	hashIdx := 0
-	for i := 0; i < len(salt)+len(hash); i++ {
-		if i == skipperIdx && saltIdx < len(salt) {
-			mixture[i] = salt[saltIdx]
-			skipperIdx += int(skipper.Int64()) + 1
-			saltIdx++
-		} else if hashIdx < len(hash) {
-			mixture[i] = hash[hashIdx]
-			hashIdx++
-		}
+	for i, j := 0, 0; j < len(salt); i, j = i+int(skipper.Int64())+1, j+1 {
+		mixture = utils.InsertAt(mixture, i, salt[j])
 	}
-
 	return mixture, nil
 }
 
