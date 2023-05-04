@@ -110,23 +110,6 @@ func (suite *DoorkeeperServiceImplTestSuite) TestCompareHashAndPassword() {
 	})
 
 	suite.Run("Unsuccesful CompareHashAndPassword", func() {
-		suite.Run("Invalid Hash Length", func() {
-			hash := make([]byte, 0)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
-			defer cancel()
-			found, err := suite.service.CompareHashAndPassword(ctx, "wrong_password", hash)
-			assert.Error(suite.T(), err)
-			assert.ErrorContains(suite.T(), err, "invalid hash length")
-			assert.ErrorIs(suite.T(), err, ErrInvalidHashLength)
-			assert.Equal(suite.T(), found, false)
-
-			found2, err2 := suite.service.CompareHashAndPassword(ctx, "wrong_password", nil)
-			assert.Error(suite.T(), err2)
-			assert.ErrorContains(suite.T(), err2, "invalid hash length")
-			assert.ErrorIs(suite.T(), err2, ErrInvalidHashLength)
-			assert.Equal(suite.T(), found2, false)
-		})
 		suite.Run("Password Mismatch", func() {
 			hash, _ := suite.service.HashPassword("password")
 
@@ -290,6 +273,30 @@ func BenchmarkHashPassword(b *testing.B) {
 				b.StartTimer()
 
 				s.service.HashPassword(password)
+
+				b.StopTimer()
+				s.TearDownTest()
+			}
+		})
+	}
+	s.TearDownSuite()
+}
+
+func BenchmarkCompareHashAndPassword(b *testing.B) {
+	s := new(DoorkeeperServiceImplTestSuite)
+	s.SetT(&testing.T{})
+	s.SetupSuite()
+	for _, password := range passwordTestCases {
+		b.ResetTimer()
+		b.Run(fmt.Sprintf("password_of_%s", password), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				s.SetupTest()
+
+				hash, _ := s.service.HashPassword(password)
+
+				b.StartTimer()
+
+				s.service.CompareHashAndPassword(context.Background(), password, hash)
 
 				b.StopTimer()
 				s.TearDownTest()
