@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"io"
@@ -21,12 +22,10 @@ import (
 var (
 	MinSaltLength int64 = 1 << 5
 	MaxSaltLength int64 = 1 << 6
+	NumWorkers    int   = 10
 )
 
-var (
-	ErrInvalidHashLength = errors.New("invalid hash length")
-	ErrPasswordMismatch  = errors.New("timeout exceeded due to password mismatch")
-)
+var ErrPasswordMismatch = errors.New("timeout exceeded due to password mismatch")
 
 type doorkeeperService struct {
 	dk *doorkeeper.Doorkeeper
@@ -62,10 +61,6 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 }
 
 func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error) {
-	if err := validation.Validate(hash, validation.Required, validation.Length(s.dk.GetHashKeyLen(), s.dk.GetHashKeyLen()+int(MaxSaltLength))); err != nil {
-		return false, ErrInvalidHashLength
-	}
-
 	reportChannel := make(chan bool)
 
 	for i := MinSaltLength; i <= MaxSaltLength; i++ {
@@ -113,16 +108,11 @@ func (s *doorkeeperService) extractFromMixtures(hashToExtract []byte, skipper in
 func (s *doorkeeperService) compareHashes(password string, salt, hashToCompare []byte) bool {
 	hash := pbkdf2.Key([]byte(password), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
 
-	if len(hashToCompare) != len(hash) {
-		return false
+	if subtle.ConstantTimeCompare(hash, hashToCompare) == 1 {
+		return true
 	}
 
-	for i := 0; i < len(hash); i++ {
-		if hash[i] != hashToCompare[i] {
-			return false
-		}
-	}
-	return true
+	return false
 }
 
 /*
