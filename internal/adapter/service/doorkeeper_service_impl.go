@@ -75,7 +75,10 @@ func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password
 	}
 }
 
-func (s *doorkeeperService) compareWorker(ctx context.Context, password string, hashToExtract []byte, lengthOfSalt int64, reportChannel chan<- bool) {
+func (s *doorkeeperService) compareWorker(
+	ctx context.Context, password string, hashToExtract []byte,
+	lengthOfSalt int64, reportChannel chan<- bool,
+) {
 	for i := 0; i < 2; i++ {
 		select {
 		case <-ctx.Done():
@@ -281,5 +284,6 @@ func (s *doorkeeperService) validateKeys(ctx context.Context, obj map[string]any
 		index++
 	}
 
-	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.Required, validation.In(args...).Error("does not contained required claim")))
+	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.Required, validation.In(args...).
+		Error("does not contained required claim")))
 }

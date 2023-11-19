@@ -2,7 +2,6 @@ package rater
 
 import (
 	"context"
-	"log"
 	"sync"
 	"time"
 
@@ -72,7 +71,6 @@ func (rater *Rater) evaluateInBackground(ctx context.Context) {
 				time.Sleep(rater.intervalForEvaluation)
 
 				rater.mu.Lock()
-				log.Printf("Number of clients in map %d", len(rater.clients))
 				for ip, client := range rater.clients {
 					if time.Since(client.lastSeen) > rater.clientDeletionInterval {
 						delete(rater.clients, ip)
