@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-// Option -.
+// Option .-.
 type Option func(*Doorkeeper)
 
 func RegisterCertPath(path string) Option {
@@ -38,6 +38,12 @@ func RegisterRefreshDuration(t time.Duration) Option {
 func RegisterIssuer(iss string) Option {
 	return func(d *Doorkeeper) {
 		d.issuer = iss
+	}
+}
+
+func RegisterSecretKey(secret string) Option {
+	return func(d *Doorkeeper) {
+		d.secretKey = secret
 	}
 }
 

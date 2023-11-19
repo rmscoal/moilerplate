@@ -3,11 +3,13 @@ package config
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"strconv"
+	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type dbConfig struct {
@@ -18,13 +20,9 @@ type dbConfig struct {
 	password string
 	name     string
 
-	maxPoolSizeStr     string
-	maxOpenConnStr     string
-	maxConnLifetimeStr string
-
 	maxPoolSize     int
 	maxOpenConn     int
-	maxConnLifetime int
+	maxConnLifetime time.Duration
 }
 
 // newDbConfig method    has a receiver of the config
@@ -32,22 +30,20 @@ type dbConfig struct {
 // Config struct.
 func (c *Config) newDbConfig() {
 	d := dbConfig{
-		host:               os.Getenv("DB_HOST"),
-		port:               os.Getenv("DB_PORT"),
-		name:               os.Getenv("DB_NAME"),
-		user:               os.Getenv("DB_USER"),
-		password:           os.Getenv("DB_PASSWORD"),
-		maxPoolSizeStr:     os.Getenv("DB_MAX_OPEN_CONN"),
-		maxOpenConnStr:     os.Getenv("DB_MAX_POOL_SIZE"),
-		maxConnLifetimeStr: os.Getenv("DB_MAX_CONN_LIFETIME"),
+		host:     os.Getenv("DB_HOST"),
+		port:     os.Getenv("DB_PORT"),
+		name:     os.Getenv("DB_NAME"),
+		user:     os.Getenv("DB_USER"),
+		password: os.Getenv("DB_PASSWORD"),
+	}
+
+	if err := (&d).parse(); err != nil {
+		log.Fatalf("Error parsing postgres environment: %s\n", err)
 	}
 
 	if err := d.validate(); err != nil {
 		log.Fatalf("%s", err)
 	}
-
-	pd := &d
-	pd.parse()
 
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s",
@@ -57,9 +53,14 @@ func (c *Config) newDbConfig() {
 		d.port,
 		d.name,
 	)
+	u, err := url.Parse(dsn)
+	if err != nil {
+		log.Fatalf("ERROR parsing dsn: %s\n", err)
+	}
+	u.User = url.UserPassword(d.user, d.password)
 
-	c.Db = *pd
-	c.Db.URL = dsn
+	c.Db.URL = u.String()
+	c.Db = d
 }
 
 // validate method    validates the dbConfig struct
@@ -71,33 +72,28 @@ func (d dbConfig) validate() error {
 		validation.Field(&d.user, validation.Required),
 		validation.Field(&d.name, validation.Required),
 		validation.Field(&d.password, validation.Required),
-		validation.Field(&d.maxOpenConnStr, is.Int),
-		validation.Field(&d.maxPoolSizeStr, is.Int),
-		validation.Field(&d.maxConnLifetimeStr, is.Int),
 	)
 }
 
 // parse method    parses a string value from env to
 // the dedication type destination.
-func (d *dbConfig) parse() {
-	var maxPoolSize, maxOpenConn, maxConnLifetime int
-
-	maxPoolSize, err := strconv.Atoi(d.maxPoolSizeStr)
+func (d *dbConfig) parse() (err error) {
+	d.maxPoolSize, err = strconv.Atoi(os.Getenv("DB_MAX_POOL_SIZE"))
 	if err != nil {
-		maxPoolSize = -1
-	}
-	maxOpenConn, err = strconv.Atoi(d.maxOpenConnStr)
-	if err != nil {
-		maxOpenConn = -1
-	}
-	maxConnLifetime, err = strconv.Atoi(d.maxConnLifetimeStr)
-	if err != nil {
-		maxConnLifetime = -1
+		return err
 	}
 
-	d.maxPoolSize = maxPoolSize
-	d.maxOpenConn = maxOpenConn
-	d.maxConnLifetime = maxConnLifetime
+	d.maxOpenConn, err = strconv.Atoi(os.Getenv("DB_MAX_OPEN_CONN"))
+	if err != nil {
+		return err
+	}
+
+	d.maxConnLifetime, err = time.ParseDuration(os.Getenv("DB_MAX_CONN_LIFETIME"))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Getter functions for getting db connection configurations
@@ -109,6 +105,6 @@ func (d dbConfig) MaxOpenConn() int {
 	return d.maxOpenConn
 }
 
-func (d dbConfig) MaxConnLifetime() int {
+func (d dbConfig) MaxConnLifetime() time.Duration {
 	return d.maxConnLifetime
 }

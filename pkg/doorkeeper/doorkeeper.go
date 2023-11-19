@@ -21,12 +21,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
 )
 
 type Doorkeeper struct {
 	// --- JWT ---
 	signMethod      jwt.SigningMethod // This will be used for JWS / JWE
 	certPath        string            // Stores the path to the certification keys
+	secretKey       string            // Stores the secret key for symmetric signing methods
 	privKey         interface{}       // Stores the private keys parsed from PEM (if asymmetric)
 	pubKey          interface{}       // Stores the public keys parsed from PEM (if symmetric)
 	issuer          string            // *Claims*
@@ -119,7 +121,7 @@ func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
 func (d *Doorkeeper) loadSecretKeys() {
 	switch d.GetConcreteSignMethod() {
 	case HMAC_SIGN_METHOD_TYPE:
-		d.privKey = d.getSymmetricKeyFromFile("id_secret")
+		d.privKey = utils.ConvertStringToByteSlice(d.secretKey)
 		d.pubKey = d.privKey
 	case RSA_SIGN_METHOD_TYPE:
 		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_rsa")
@@ -134,15 +136,6 @@ func (d *Doorkeeper) loadSecretKeys() {
 		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_ed2559")
 		d.privKey, d.pubKey = d.parseEdKeysFromPem(privKeyByte, pubKeyByte)
 	}
-}
-
-func (d *Doorkeeper) getSymmetricKeyFromFile(filename string) []byte {
-	key, err := os.ReadFile(d.certPath + "/" + filename)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return key
 }
 
 func (d *Doorkeeper) getAsymmetricKeysFromFile(filename string) ([]byte, []byte) {
