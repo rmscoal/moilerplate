@@ -1,6 +1,8 @@
 package composer
 
 import (
+	"log"
+
 	impl "github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
@@ -26,8 +28,6 @@ func NewRepoComposer(db *postgres.Postgres, env string) IRepoComposer {
 	switch comp.env {
 	case "DEVELOPMENT":
 		comp.setToDebug()
-	case "MIGRATION":
-		comp.setToDebug()
 		comp.Migrate()
 	}
 
@@ -49,7 +49,9 @@ func (c *repoComposer) setToDebug() {
 }
 
 func (c *repoComposer) Migrate() {
-	c.db.ORM.AutoMigrate(
+	if err := c.db.ORM.AutoMigrate(
 		model.GetAllRelationalModels()...,
-	)
+	); err != nil {
+		log.Fatalf("FATAL - Unable to automigrate models: %s", err)
+	}
 }

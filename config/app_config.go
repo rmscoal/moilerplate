@@ -46,7 +46,6 @@ func (a appConfig) validate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.logPath, validation.Required),
 		validation.Field(&a.environment, validation.Required, validation.In(
-			"MIGRATION",
 			"DEVELOPMENT",
 			"TESTING",
 			"STAGING",

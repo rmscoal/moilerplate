@@ -45,14 +45,8 @@ func (c *Config) newDbConfig() {
 		log.Fatalf("%s", err)
 	}
 
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		d.user,
-		d.password,
-		d.host,
-		d.port,
-		d.name,
-	)
+	// Create dsn
+	dsn := fmt.Sprintf("postgres://%s:%s/%s", d.host, d.port, d.name)
 	u, err := url.Parse(dsn)
 	if err != nil {
 		log.Fatalf("ERROR parsing dsn: %s\n", err)
@@ -60,7 +54,6 @@ func (c *Config) newDbConfig() {
 	u.User = url.UserPassword(d.user, d.password)
 
 	c.Db.URL = u.String()
-	c.Db = d
 }
 
 // validate method    validates the dbConfig struct
