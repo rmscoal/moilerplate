@@ -24,14 +24,14 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 		Delete(&model.UserEmail{}, "user_id = ?", user.Id).
 		Error; err != nil {
 		tx.Rollback()
-		return user, err
+		return user, translateGORMError(err)
 	}
 
 	if err := tx.Model(&userModel).
 		Omit("UserCredential").
 		Save(&userModel).Error; err != nil {
 		tx.Rollback()
-		return user, err
+		return user, translateGORMError(err)
 	}
 	tx.Commit()
 	return mapper.MapUserModelToDomain(userModel), nil
@@ -44,7 +44,7 @@ func (repo *userProfileRepo) GetUserProfile(ctx context.Context, id string) (dom
 		Preload("UserCredential").
 		First(&userModel, "id = ?", id).
 		Error; err != nil {
-		return domain.User{}, err
+		return domain.User{}, translateGORMError(err)
 	}
 
 	return mapper.MapUserModelToDomain(userModel), nil

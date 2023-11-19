@@ -26,7 +26,7 @@ func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User)
 		WithContext(ctx).
 		Model(&model).
 		Create(&model).Error; err != nil {
-		return user, err
+		return user, translateGORMError(err)
 	}
 	user = mapper.MapUserModelToDomain(model)
 	return user, nil
@@ -43,17 +43,6 @@ func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username stri
 		Error; err != nil {
 		return domain.User{}, fmt.Errorf("user not found with given username")
 	}
-	// Alternative:
-	// if err := repo.db.
-	// 	WithContext(ctx).
-	// 	Model(&userModel).
-	// 	Joins(`INNER JOIN user_credentials ON user_credentials.user_id = users.id`).
-	// 	Where("user_credentials.username = ?", cred.Username).
-	// 	Where("user_credentials.password = ?", cred.Password).
-	// 	First(&userModel).
-	// 	Error; err != nil {
-	// 	return domain.User{}, fmt.Errorf("user not found with given username and password")
-	// }
 
 	return mapper.MapUserModelToDomain(userModel), nil
 }
@@ -135,7 +124,7 @@ func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user dom
 		Update("password", user.Credential.Password).
 		Error; err != nil {
 		tx.Rollback()
-		return err
+		return translateGORMError(err)
 	}
 
 	tx.Commit()
@@ -147,33 +136,49 @@ func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user dom
 REPO VALIDATIONS IMPLEMENTATIONS
 *************************************************
 */
+// FIX: This is prone to race conditions?
 func (repo *credentialRepo) ValidateRepoState(ctx context.Context, user domain.User) error {
-	var err error
-	if repo.UsernameExists(ctx, user.Id, user.Credential.Username) {
-		err = AddError(err, fmt.Errorf("username has been taken"))
+	var validationError error
+
+	if found, err := repo.UsernameExists(ctx, user.Id, user.Credential.Username); err == nil {
+		if found {
+			validationError = AddError(err, fmt.Errorf("username has been taken"))
+		}
+	} else {
+		return err
 	}
-	if repo.EmailExists(ctx, user.Id, user.Emails[0].Email) {
-		err = AddError(err, fmt.Errorf("email has been taken"))
+
+	if found, err := repo.EmailExists(ctx, user.Id, user.Emails[0].Email); err == nil {
+		if found {
+			validationError = AddError(err, fmt.Errorf("email has been taken"))
+		}
+	} else {
+		return err
 	}
-	return err
+
+	return validationError
 }
 
-func (repo *credentialRepo) UsernameExists(ctx context.Context, id string, username string) bool {
+func (repo *credentialRepo) UsernameExists(ctx context.Context, id string, username string) (bool, error) {
 	var userId string
-	repo.db.WithContext(ctx).
+	if err := repo.db.WithContext(ctx).
 		Model(&model.UserCredential{}).
 		Select("user_id").
 		Where("username = ?", username).
-		Scan(&userId)
-	return userId != id
+		Scan(&userId).Error; err != nil {
+		return false, translateGORMError(err)
+	}
+	return userId != id, nil
 }
 
-func (repo *credentialRepo) EmailExists(ctx context.Context, id string, email string) bool {
+func (repo *credentialRepo) EmailExists(ctx context.Context, id string, email string) (bool, error) {
 	var userId string
-	repo.db.WithContext(ctx).
+	if err := repo.db.WithContext(ctx).
 		Model(&model.UserEmail{}).
 		Select("user_id").
 		Where("email = ?", email).
-		Scan(&userId)
-	return userId != id
+		Scan(&userId).Error; err != nil {
+		return false, translateGORMError(err)
+	}
+	return userId != id, nil
 }
