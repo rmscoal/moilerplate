@@ -20,6 +20,7 @@ func NewUserProfileController(rg *gin.RouterGroup, uc usecase.IUserProfileUseCas
 
 	r := rg.Group("/profiles")
 	{
+		r.GET("/me", controller.getProfile)
 		r.POST("/email", controller.editEmailsHandler)
 	}
 }
@@ -36,13 +37,23 @@ func (controller *UserProfileController) editEmailsHandler(c *gin.Context) {
 		return
 	}
 
-	req := mapper.MapModifyEmailRequestToUserDomain(c.Keys["userId"].(string), raw)
+	req := mapper.Profile.MapModifyEmailRequestToUserDomain(c.Keys["userId"].(string), raw)
 	data, err := controller.uc.ModifyEmailAddress(c.Request.Context(), req)
 	if err != nil {
 		controller.SummariesUseCaseError(c, err)
 		return
 	}
 
-	res := mapper.MapUserDomainToModifyEmailResponse(data)
+	res := mapper.Profile.MapUserDomainToModifyEmailResponse(data)
 	controller.Ok(c, res)
+}
+
+func (controller *UserProfileController) getProfile(c *gin.Context) {
+	data, err := controller.uc.RetrieveProfile(c.Request.Context(), c.Keys["userId"].(string))
+	if err != nil {
+		controller.SummariesUseCaseError(c, err)
+		return
+	}
+
+	controller.Ok(c, mapper.Profile.MapUserDomainToFullProfileResponse(data))
 }

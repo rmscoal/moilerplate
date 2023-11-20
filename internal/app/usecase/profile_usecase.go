@@ -15,6 +15,15 @@ func NewUserProfileUseCase(repo repo.IUserProfileRepo) IUserProfileUseCase {
 	return &userProfileUseCase{repo}
 }
 
+func (uc *userProfileUseCase) RetrieveProfile(ctx context.Context, userID string) (domain.User, error) {
+	user, err := uc.repo.GetUserProfile(ctx, userID)
+	if err != nil {
+		return user, NewNotFoundError("User", err)
+	}
+
+	return user, nil
+}
+
 func (uc *userProfileUseCase) ModifyEmailAddress(ctx context.Context, userReq domain.User) (domain.User, error) {
 	// TODO:
 	// Should probably load first the user from repo...

@@ -6,7 +6,32 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 )
 
-func MapModifyEmailRequestToUserDomain(id string, obj dto.ModifyEmailRequest) domain.User {
+// Profile mapper namespace
+type profileMapper int
+
+// Namespace to call
+var Profile profileMapper
+
+func (profileMapper) MapUserDomainToFullProfileResponse(user domain.User) dto.FullProfileResponse {
+	profile := dto.FullProfileResponse{
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		Username:    user.Credential.Username,
+		PhoneNumber: user.PhoneNumber,
+		Emails:      []dto.EmailDetail{},
+	}
+
+	for _, email := range user.Emails {
+		profile.Emails = append(profile.Emails, dto.EmailDetail{
+			Email:     email.Email,
+			IsPrimary: email.IsPrimary,
+		})
+	}
+
+	return profile
+}
+
+func (profileMapper) MapModifyEmailRequestToUserDomain(id string, obj dto.ModifyEmailRequest) domain.User {
 	user := domain.User{
 		Id: id,
 	}
@@ -19,13 +44,13 @@ func MapModifyEmailRequestToUserDomain(id string, obj dto.ModifyEmailRequest) do
 	return user
 }
 
-func MapUserDomainToModifyEmailResponse(user domain.User) dto.ModifyEmailResponse {
+func (profileMapper) MapUserDomainToModifyEmailResponse(user domain.User) dto.ModifyEmailResponse {
 	obj := dto.ModifyEmailResponse{
 		UserId: user.Id,
 	}
 
 	for _, email := range user.Emails {
-		obj.Emails = append(obj.Emails, dto.ModifyEmailDetailRequest{
+		obj.Emails = append(obj.Emails, dto.EmailDetail{
 			Email:     email.Email,
 			IsPrimary: email.IsPrimary,
 		})

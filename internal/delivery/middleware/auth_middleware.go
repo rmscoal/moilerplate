@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -14,8 +15,8 @@ type AuthHeader struct {
 func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var auth AuthHeader
-		if err := c.Copy().ShouldBindHeader(&auth); err != nil {
-			m.Unauthorized(c, err)
+		if err := c.ShouldBindHeader(&auth); err != nil {
+			m.Unauthorized(c, usecase.NewUnauthorizedError(fmt.Errorf("header not found")))
 			return
 		}
 		auth.Authorization = strings.ReplaceAll(auth.Authorization, "Bearer ", "")

@@ -15,5 +15,6 @@ type ICredentialUseCase interface {
 }
 
 type IUserProfileUseCase interface {
+	RetrieveProfile(ctx context.Context, userID string) (domain.User, error)
 	ModifyEmailAddress(ctx context.Context, user domain.User) (domain.User, error)
 }
