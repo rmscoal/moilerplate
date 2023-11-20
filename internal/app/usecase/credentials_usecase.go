@@ -35,7 +35,7 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 
 	mixture, err := uc.service.HashPassword(user.Credential.Password)
 	if err != nil {
-		return user, NewServiceError("USer", err)
+		return user, NewServiceError("User", err)
 	}
 	user.Credential.SetEncodedPasswordFromByte(mixture)
 

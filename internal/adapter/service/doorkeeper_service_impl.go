@@ -52,7 +52,7 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 		return nil, err
 	}
 
-	mixture := pbkdf2.Key([]byte(pass), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
+	mixture := pbkdf2.Key(utils.ConvertStringToByteSlice(pass), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
 
 	for i, j := 0, 0; j < len(salt); i, j = i+int(skipper.Int64())+1, j+1 {
 		mixture = utils.InsertAt(mixture, i, salt[j])
