@@ -38,14 +38,14 @@ func (controller *CredentialController) signupHandler(c *gin.Context) {
 		return
 	}
 
-	req := mapper.SignUpRequestToUserDomain(raw)
+	req := mapper.Credential.SignUpRequestToUserDomain(raw)
 	user, err := controller.uc.SignUp(c.Request.Context(), req)
 	if err != nil {
 		controller.SummariesUseCaseError(c, err)
 		return
 	}
 
-	controller.Created(c, mapper.UserDomainToTokenResponse(user))
+	controller.Created(c, mapper.Credential.UserDomainToTokenResponse(user))
 }
 
 func (controller *CredentialController) loginHandler(c *gin.Context) {
@@ -55,14 +55,14 @@ func (controller *CredentialController) loginHandler(c *gin.Context) {
 		return
 	}
 
-	req := mapper.LoginRequestToUserCredential(raw)
+	req := mapper.Credential.LoginRequestToUserCredential(raw)
 	user, err := controller.uc.Login(c.Request.Context(), req)
 	if err != nil {
 		controller.SummariesUseCaseError(c, err)
 		return
 	}
 
-	controller.Ok(c, mapper.UserDomainToTokenResponse(user))
+	controller.Ok(c, mapper.Credential.UserDomainToTokenResponse(user))
 }
 
 func (controller *CredentialController) refreshHandler(c *gin.Context) {
@@ -78,5 +78,5 @@ func (controller *CredentialController) refreshHandler(c *gin.Context) {
 		return
 	}
 
-	controller.Created(c, mapper.UserDomainToTokenResponse(user))
+	controller.Created(c, mapper.Credential.UserDomainToTokenResponse(user))
 }

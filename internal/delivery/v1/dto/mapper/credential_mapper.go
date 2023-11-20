@@ -6,7 +6,13 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
 )
 
-func SignUpRequestToUserDomain(obj dto.SignUpRequest) domain.User {
+// Add type for namespace
+type credentialMapper int
+
+// Credential mapper namespace
+var Credential credentialMapper
+
+func (credentialMapper) SignUpRequestToUserDomain(obj dto.SignUpRequest) domain.User {
 	return domain.User{
 		FirstName: obj.FirstName,
 		LastName:  obj.LastName,
@@ -24,14 +30,14 @@ func SignUpRequestToUserDomain(obj dto.SignUpRequest) domain.User {
 	}
 }
 
-func LoginRequestToUserCredential(obj dto.LoginRequest) vo.UserCredential {
+func (credentialMapper) LoginRequestToUserCredential(obj dto.LoginRequest) vo.UserCredential {
 	return vo.UserCredential{
 		Username: obj.Username,
 		Password: obj.Password,
 	}
 }
 
-func UserDomainToTokenResponse(user domain.User) dto.TokenResponse {
+func (credentialMapper) UserDomainToTokenResponse(user domain.User) dto.TokenResponse {
 	return dto.TokenResponse{
 		AccessToken:  user.Credential.Tokens.AccesssToken,
 		RefreshToken: user.Credential.Tokens.RefreshToken,
