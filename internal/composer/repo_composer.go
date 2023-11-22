@@ -25,10 +25,11 @@ func NewRepoComposer(db *postgres.Postgres, env string) IRepoComposer {
 	comp.env = env
 	comp.db = db
 
+	comp.Migrate()
+
 	switch comp.env {
 	case "DEVELOPMENT":
 		comp.setToDebug()
-		comp.Migrate()
 	}
 
 	return comp
