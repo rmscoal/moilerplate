@@ -1,0 +1,25 @@
+# Dot files
+.git
+.gitignore
+.vscode
+.DS_Store
+.env
+.env.development
+.env.production
+.env.staging
+.env.template
+
+# Compose
+docker-compose.yml
+
+# Jenkins
+Jenkinsfile
+
+# App HTTP Logging
+logs/
+
+# Development folder
+tmp/
+
+# README
+README.md
