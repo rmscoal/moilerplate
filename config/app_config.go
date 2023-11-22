@@ -29,7 +29,7 @@ func (c *Config) newAppConfig() {
 		logPath:     strings.ToLower(os.Getenv("LOG_PATH")),
 	}
 
-	if err := (&a).parse(); err != nil {
+	if err := a.parse(); err != nil {
 		log.Fatalf("Error while parsing app configuration: %s\n", err)
 	}
 

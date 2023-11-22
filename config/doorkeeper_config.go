@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -36,7 +37,7 @@ func (c *Config) newDoorkeeperConfig() {
 		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
 	}
-	if err := (&d).parse(); err != nil {
+	if err := d.parse(); err != nil {
 		log.Fatalf("Error parsing doorkeeper environment: %s\n", err)
 	}
 
@@ -73,12 +74,12 @@ func (d doorkeeperConfig) validate() error {
 func (d *doorkeeperConfig) parse() (err error) {
 	d.accessDuration, err = time.ParseDuration(os.Getenv("DOORKEEPER_ACCESS_TOKEN_DURATION"))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse DOORKEEPER_ACCESS_TOKEN_DURATION: %s\n", err)
 	}
 
 	d.refreshDuration, err = time.ParseDuration(os.Getenv("DOORKEEPER_REFRESH_TOKEN_DURATION"))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse DOORKEEPER_REFRESH_TOKEN_DURATION: %s\n", err)
 	}
 
 	return nil

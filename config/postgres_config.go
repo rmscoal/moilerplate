@@ -37,7 +37,7 @@ func (c *Config) newDbConfig() {
 		password: os.Getenv("DB_PASSWORD"),
 	}
 
-	if err := (&d).parse(); err != nil {
+	if err := d.parse(); err != nil {
 		log.Fatalf("Error parsing postgres environment: %s\n", err)
 	}
 
@@ -73,17 +73,17 @@ func (d dbConfig) validate() error {
 func (d *dbConfig) parse() (err error) {
 	d.maxPoolSize, err = strconv.Atoi(os.Getenv("DB_MAX_POOL_SIZE"))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse DB_MAX_POOL_SIZE: %s\n", err)
 	}
 
 	d.maxOpenConn, err = strconv.Atoi(os.Getenv("DB_MAX_OPEN_CONN"))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse DB_MAX_OPEN_CONN: %s\n", err)
 	}
 
 	d.maxConnLifetime, err = time.ParseDuration(os.Getenv("DB_MAX_CONN_LIFETIME"))
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to parse DB_MAX_CONN_LIFETIME: %s\n", err)
 	}
 
 	return nil

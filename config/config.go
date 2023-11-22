@@ -43,7 +43,7 @@ func GetConfig() *Config {
 func (c *Config) load() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("error while loading env var: %s", err)
+		log.Println("WARNING - Environment is not loading from .env")
 	}
 
 	// Register here for your new configs with third-parties.

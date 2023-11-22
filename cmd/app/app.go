@@ -48,8 +48,17 @@ func Run(cfg *config.Config) {
 	repoComposer := composer.NewRepoComposer(pg, cfg.App.Environment())
 	usecaseComposer := composer.NewUseCaseComposer(repoComposer, serviceComposer)
 
+	var deliveree *gin.Engine
+	switch cfg.App.Environment() {
+	case "PRODUCTION":
+		gin.SetMode(gin.ReleaseMode)
+		deliveree = gin.New()
+		deliveree.Use(gin.Recovery())
+	default:
+		deliveree = gin.Default()
+	}
+
 	// Http
-	deliveree := gin.Default()
 	v1.NewRouter(deliveree, logger, usecaseComposer)
 	httpserver.NewServer(deliveree,
 		httpserver.RegisterHostAndPort(cfg.Server.Host, cfg.Server.Port),
