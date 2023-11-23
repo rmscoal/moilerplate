@@ -35,7 +35,7 @@ You can start by using moilerplate in these steps:
     b. If you're going to use aside from HMAC, like RSA for the signing, then you will need to create a `cert` folder (or any name of your choice) in the root directory. Then, for example we're going to use RSA, generate an RSA private and public key files and name it as `id_rsa` (for private) and `id_rsa.pub` (for public). The name of the file I use follows the usual namin convention. You might ask how do we generate them? Well, one way is to go to [this link](https://cryptotools.net/rsagen) for example to generate yours. Once you're done, you can input the name of the folder to `DOORKEEPER_CERT_PATH` environment variable either in `.env` or `docker-compose.yml`.<br>
     > NOTE: If you're using docker, make sure to exclude the folder you just made form the `.dockerignore` file.<br>
     > *By the way, if you guys found a better way to do is, feel free to Open PR, I'm open to solutions as long as you are using a "free" solution (not like suggestion Google Cloud Secret Manager or something 😜).*
-3. Next, if you're using docker to start, I've provided a hot-reload `dev.dockerfile` for you. But if you don't want it, change the `dev.dockerfile` to `Dockerfile` in `docker-compose.yml`. Or if you're not using docker, you can go and run the app like normal: `go run .` command.
+3. Next, if you're using docker to start, I've provided a hot-reload `dev.dockerfile` for you. But if you don't want it, change the `dev.dockerfile` to `Dockerfile` in `docker-compose.yml`. Or if you're not using docker, you can go and run the app like normal: `go run .` command. If you want hot-reload, I recommend you to use [air](https://github.com/cosmtrek/air).
 
 
 ## What's already included in Moilerplate?
