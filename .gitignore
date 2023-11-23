@@ -6,7 +6,7 @@
 .vscode
 
 # Log files
-logs/*
+logs/log.txt
 
 # Packages
 go.sum

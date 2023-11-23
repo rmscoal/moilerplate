@@ -1,0 +1,3 @@
+This folder stores the logs of the API responses.
+
+time="2023-11-20T20:59:57+07:00" level=info msg="{25.800416ms 200 127.0.0.1 POST /api/v1/credentials/login PostmanRuntime/7.35.0}"
