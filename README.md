@@ -28,15 +28,18 @@ It is a boilerplate for monolithic backend application that prioritizes security
   - `internal/composer` acts as the manager to store all usecase, infrastructure and service layer for easier management.<br>
 
 ## How to use Moilerplate
-You can start by using moilerplate in these steps:
-1. Obviously, clone this project and go to the root directory of moilerplate.
-2. Now here you have two options to go for the Doorkeeper's JWE<br>
-    a. If you're going to use HMAC, just provide the secret key to either the `.env` file (running on your host machine) or the `docker-compose.yml` (that is if you're using docker)<br>
-    b. If you're going to use aside from HMAC, like RSA for the signing, then you will need to create a `cert` folder (or any name of your choice) in the root directory. Then, for example we're going to use RSA, generate an RSA private and public key files and name it as `id_rsa` (for private) and `id_rsa.pub` (for public). The name of the file I use follows the usual namin convention. You might ask how do we generate them? Well, one way is to go to [this link](https://cryptotools.net/rsagen) for example to generate yours. Once you're done, you can input the name of the folder to `DOORKEEPER_CERT_PATH` environment variable either in `.env` or `docker-compose.yml`.<br>
-    > NOTE: If you're using docker, make sure to exclude the folder you just made form the `.dockerignore` file.<br>
-    > *By the way, if you guys found a better way to do is, feel free to Open PR, I'm open to solutions as long as you are using a "free" solution (not like suggestion Google Cloud Secret Manager or something 😜).*
-3. Next, if you're using docker to start, I've provided a hot-reload `dev.dockerfile` for you. But if you don't want it, change the `dev.dockerfile` to `Dockerfile` in `docker-compose.yml`. Or if you're not using docker, you can go and run the app like normal: `go run .` command. If you want hot-reload, I recommend you to use [air](https://github.com/cosmtrek/air).
+In general, Moilerplate has an in-house package named `doorkeeper` that manages password hashes and JWTs. You can customize which signing method you want to use, either symmetric or asymmetric.<br>
+If you're opting for asymmetric option, you need to make a new folder that stores the private and public key. For example, if you're using RSA as your signing method, you can follow these steps:
+1. Create a folder say `cert`.
+2. Generate the private and public key, for example you can do via this [link](https://cryptotools.net/rsagen).
+3. Paste the private key in a file named `id_rsa` inside `cert` and paste the public key in `id_rsa.pub`.
+4. Then register your folder name in the `DOORKEEPER_CERT_PATH` environment variable either in `.env` or `docker-compose.yml` (for docker).
 
+If instead you're using symmetric option you could:
+1. Register the secret key in the `DOORKEEPER_SECRET_KEY` environment variable either in `.env` or `docker-compose.yml` (for docker).
+2. Keep in mind that you should not fill the `DOORKEEPER_CERT_PATH` environment variable.
+
+Next we can either start the app via docker or normal. I also provided a hot reload docker file in `dev.dockerfile`. Try it out
 
 ## What's already included in Moilerplate?
 ### Security
