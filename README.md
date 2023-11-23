@@ -48,7 +48,7 @@ Now, it might not be as sophisticated as other system, but this is the basic sec
 #### 2. Rotation of the hash password
 Everytime a user logs in, his/her password is being rerotated with a different random salt. Because of that the system, Moilerplate itself, does not know the salt. Also, because of this, we need an algorithm to be able to compare the hash. Moilerplate uses goroutines to look up the possible salt and uses the most recommended hashing algorithm `pbkdf2` according to my research. Furthermore, if this salt lookup takes more than **500ms**, moilerplate concludes that the given password is a mismatch. By average, Moilerplate is able to identify correct password **99.99%** of the time and it takes around **30ms** to solve correct password input. Again, once the hashed password is solved, Moilerplate generates a new salt then hash it and saves to the database.
 
-> [!INFO]<br>
+> [!NOTE]<br>
 > I also believe that there are always a room for improvement in the security applied in Moilerplate and I'm open to suggestions.
 
 ***Last but not least, I hope you enjoy using Moilerplate and always modify this boilerplate to fit your usecase!***
