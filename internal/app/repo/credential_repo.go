@@ -8,6 +8,8 @@ import (
 )
 
 type ICredentialRepo interface {
+	IBaseRepo
+
 	ValidateRepoState(ctx context.Context, user domain.User) error
 	CreateNewUser(ctx context.Context, user domain.User) (domain.User, error)
 	GetUserByUsername(ctx context.Context, username string) (domain.User, error)

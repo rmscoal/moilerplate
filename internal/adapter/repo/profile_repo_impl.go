@@ -6,15 +6,14 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/mapper"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"gorm.io/gorm"
 )
 
 type userProfileRepo struct {
-	db *gorm.DB
+	*baseRepo
 }
 
-func NewUserProfileRepo(db *gorm.DB) *userProfileRepo {
-	return &userProfileRepo{db}
+func NewUserProfileRepo() *userProfileRepo {
+	return &userProfileRepo{baseRepo: gormRepo}
 }
 
 func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.User) (domain.User, error) {
@@ -25,14 +24,14 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 		Delete(&model.UserEmail{}, "user_id = ?", user.Id).
 		Error; err != nil {
 		tx.Rollback()
-		return user, translateGORMError(err)
+		return user, repo.TranslateError(err)
 	}
 
 	if err := tx.Model(&userModel).
 		Select("UserEmails").
 		Save(&userModel).Error; err != nil {
 		tx.Rollback()
-		return user, translateGORMError(err)
+		return user, repo.TranslateError(err)
 	}
 	tx.Commit()
 	return mapper.MapUserModelToDomain(userModel), nil
@@ -46,7 +45,7 @@ func (repo *userProfileRepo) GetUserProfile(ctx context.Context, id string) (dom
 		Preload("UserCredential").
 		First(&userModel, "id = ?", id).
 		Error; err != nil {
-		return domain.User{}, translateGORMError(err)
+		return domain.User{}, repo.TranslateError(err)
 	}
 
 	return mapper.MapUserModelToDomain(userModel), nil

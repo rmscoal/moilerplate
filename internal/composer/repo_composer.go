@@ -37,11 +37,11 @@ func NewRepoComposer(db *postgres.Postgres, env string) IRepoComposer {
 
 // -------------- DI --------------
 func (c *repoComposer) CredentialRepo() repo.ICredentialRepo {
-	return impl.NewCredentialRepo(c.db.ORM)
+	return impl.NewCredentialRepo()
 }
 
 func (c *repoComposer) UserProfileRepo() repo.IUserProfileRepo {
-	return impl.NewUserProfileRepo(c.db.ORM)
+	return impl.NewUserProfileRepo()
 }
 
 // -------------- Setups --------------
@@ -55,4 +55,6 @@ func (c *repoComposer) Migrate() {
 	); err != nil {
 		log.Fatalf("FATAL - Unable to automigrate models: %s", err)
 	}
+
+	impl.InitBaseRepo(c.db.ORM)
 }

@@ -9,6 +9,7 @@ import (
 )
 
 type CredentialRepoMock struct {
+	BaseRepoMock
 	mock.Mock
 }
 

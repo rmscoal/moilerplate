@@ -12,11 +12,11 @@ import (
 )
 
 type credentialRepo struct {
-	db *gorm.DB
+	*baseRepo
 }
 
-func NewCredentialRepo(db *gorm.DB) *credentialRepo {
-	return &credentialRepo{db}
+func NewCredentialRepo() *credentialRepo {
+	return &credentialRepo{baseRepo: gormRepo}
 }
 
 func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User) (domain.User, error) {
@@ -26,7 +26,7 @@ func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User)
 		WithContext(ctx).
 		Model(&model).
 		Create(&model).Error; err != nil {
-		return user, translateGORMError(err)
+		return user, repo.TranslateError(err)
 	}
 	user = mapper.MapUserModelToDomain(model)
 	return user, nil
@@ -41,7 +41,7 @@ func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username stri
 		InnerJoins("UserCredential", repo.db.Where(&model.UserCredential{Username: username})).
 		First(&userModel).
 		Error; err != nil {
-		return domain.User{}, fmt.Errorf("user not found with given username")
+		return domain.User{}, repo.TranslateError(err)
 	}
 
 	return mapper.MapUserModelToDomain(userModel), nil
@@ -124,7 +124,7 @@ func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user dom
 		Update("password", user.Credential.Password).
 		Error; err != nil {
 		tx.Rollback()
-		return translateGORMError(err)
+		return repo.TranslateError(err)
 	}
 
 	tx.Commit()
@@ -166,7 +166,7 @@ func (repo *credentialRepo) UsernameExists(ctx context.Context, id string, usern
 		Select("user_id").
 		Where("username = ?", username).
 		Scan(&userId).Error; err != nil {
-		return false, translateGORMError(err)
+		return false, repo.TranslateError(err)
 	}
 	return userId != id, nil
 }
@@ -178,7 +178,7 @@ func (repo *credentialRepo) EmailExists(ctx context.Context, id string, email st
 		Select("user_id").
 		Where("email = ?", email).
 		Scan(&userId).Error; err != nil {
-		return false, translateGORMError(err)
+		return false, repo.TranslateError(err)
 	}
 	return userId != id, nil
 }

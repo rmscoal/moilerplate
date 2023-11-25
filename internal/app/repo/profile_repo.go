@@ -7,6 +7,8 @@ import (
 )
 
 type IUserProfileRepo interface {
+	IBaseRepo
+
 	GetUserProfile(ctx context.Context, id string) (domain.User, error)
 	SaveUserEmails(ctx context.Context, user domain.User) (domain.User, error)
 }
