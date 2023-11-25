@@ -21,7 +21,7 @@ func NewUserProfileController(rg *gin.RouterGroup, uc usecase.IUserProfileUseCas
 	r := rg.Group("/profiles")
 	{
 		r.GET("/me", controller.getProfile)
-		r.POST("/email", controller.editEmailsHandler)
+		r.PUT("/email", controller.editEmailsHandler)
 	}
 }
 

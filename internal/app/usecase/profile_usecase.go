@@ -24,31 +24,13 @@ func (uc *userProfileUseCase) RetrieveProfile(ctx context.Context, userID string
 	return user, nil
 }
 
-func (uc *userProfileUseCase) ModifyEmailAddress(ctx context.Context, userReq domain.User) (domain.User, error) {
-	// TODO:
-	// Should probably load first the user from repo...
-	// Checks which is the new and old emails...
-	// Verify email by sending OTP code...
-
-	user, err := uc.repo.GetUserProfile(ctx, userReq.Id)
-	if err != nil {
-		return user, NewNotFoundError("User", err)
-	}
-
-	user.ReplaceEmails(userReq.Emails)
-
-	// Validate each emails matches domain rules
-	if err := user.ValidateEmailsWithContext(ctx); err != nil {
-		return user, NewDomainError("User", err)
-	}
-
-	// Verify that there exists only one primary email
-	if err := user.VerifyOnePrimaryEmail(); err != nil {
+func (uc *userProfileUseCase) ModifyEmailAddress(ctx context.Context, user domain.User) (domain.User, error) {
+	if err := user.ValidateEmails(); err != nil {
 		return user, NewDomainError("User", err)
 	}
 
 	// Persist to repo
-	user, err = uc.repo.SaveUserEmails(ctx, user)
+	user, err := uc.repo.SaveUserEmails(ctx, user)
 	if err != nil {
 		return user, NewConflictError("User", err)
 	}

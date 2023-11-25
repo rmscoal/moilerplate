@@ -20,6 +20,7 @@ func NewUserProfileRepo(db *gorm.DB) *userProfileRepo {
 func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.User) (domain.User, error) {
 	userModel := mapper.MapUserDomainToPersistence(user)
 	tx := repo.db.WithContext(ctx).Begin()
+
 	if err := tx.Unscoped().
 		Delete(&model.UserEmail{}, "user_id = ?", user.Id).
 		Error; err != nil {
@@ -28,7 +29,7 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 	}
 
 	if err := tx.Model(&userModel).
-		Omit("UserCredential").
+		Select("UserEmails").
 		Save(&userModel).Error; err != nil {
 		tx.Rollback()
 		return user, translateGORMError(err)
@@ -39,7 +40,8 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 
 func (repo *userProfileRepo) GetUserProfile(ctx context.Context, id string) (domain.User, error) {
 	var userModel model.User
-	if err := repo.db.Model(&userModel).
+	if err := repo.db.WithContext(ctx).
+		Model(&userModel).
 		Preload("UserEmails").
 		Preload("UserCredential").
 		First(&userModel, "id = ?", id).
