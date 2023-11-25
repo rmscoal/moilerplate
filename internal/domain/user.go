@@ -1,14 +1,12 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
 )
 
 type User struct {
@@ -20,13 +18,12 @@ type User struct {
 	Credential  vo.UserCredential
 }
 
-func (v User) ValidateWithContext(ctx context.Context) error {
-	if err := validation.ValidateStructWithContext(ctx, &v,
+func (v User) Validate() error {
+	if err := validation.ValidateStruct(&v,
 		validation.Field(&v.Id, validation.When(v.Id != "", validation.Required, is.UUIDv4)),
 		validation.Field(&v.FirstName, validation.Required, validation.Length(3, 20)),
 		validation.Field(&v.LastName, validation.Required, validation.Length(3, 25)),
 		validation.Field(&v.Credential),
-		validation.Field(&v.Emails, validation.Required, validation.Each(validation.NotNil)),
 		// see: https://stackoverflow.com/questions/44670612/regex-for-indonesian-phone-number
 		validation.Field(&v.PhoneNumber, validation.Required, validation.Match(regexp.MustCompile(
 			`(\+62 ((\d{3}([ -]\d{3,})([- ]\d{4,})?)|(\d+)))|(\(\d+\) \d+)|\d{3}( \d+)+|(\d+[ -]\d+)|\d+`),
@@ -35,43 +32,36 @@ func (v User) ValidateWithContext(ctx context.Context) error {
 		return err
 	}
 
-	if err := v.ValidateEmailsWithContext(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return v.ValidateEmails()
 }
 
-func (v User) ValidateUserCredentialsWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, &v,
-		validation.Field(&v.Id, validation.Required, is.UUIDv4),
-		validation.Field(&v.Credential.Tokens.TokenID, validation.Required, is.UUIDv4),
+func (v User) ValidateEmails() error {
+	return validation.ValidateStruct(&v,
+		validation.Field(&v.Emails, validation.Required, validation.By(func(value any) error {
+			emails, ok := value.([]vo.UserEmail)
+			if !ok {
+				return fmt.Errorf("unrecognizable user's emails")
+			}
+
+			hash := make(map[string]bool, 0)
+			primaryCount := 0
+
+			for _, email := range emails {
+				if email.IsPrimary {
+					primaryCount++
+				}
+
+				if primaryCount > 1 {
+					return fmt.Errorf("there should only be one primary email")
+				}
+
+				if _, found := hash[email.Email]; found {
+					return fmt.Errorf("should be unique")
+				}
+				hash[email.Email] = true
+			}
+
+			return nil
+		})),
 	)
-}
-
-func (v User) ValidateEmailsWithContext(ctx context.Context) (err error) {
-	for _, email := range v.Emails {
-		vErr := email.Validate()
-		if vErr != nil {
-			err = utils.AddError(err, vErr)
-		}
-	}
-	return err
-}
-
-func (u *User) VerifyOnePrimaryEmail() (err error) {
-	counter := 0
-	for _, email := range u.Emails {
-		if email.IsPrimary {
-			counter++
-		}
-	}
-	if counter != 1 {
-		err = fmt.Errorf("there exists multiple/none primary email")
-	}
-	return err
-}
-
-func (u *User) ReplaceEmails(emails []vo.UserEmail) {
-	u.Emails = emails
 }

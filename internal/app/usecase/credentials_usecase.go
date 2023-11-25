@@ -24,7 +24,7 @@ func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeper
 
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
 	// Validate user entity
-	if err := user.ValidateWithContext(ctx); err != nil {
+	if err := user.Validate(); err != nil {
 		return user, NewDomainError("User", err)
 	}
 
