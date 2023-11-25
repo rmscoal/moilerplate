@@ -28,11 +28,6 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 		return user, NewDomainError("User", err)
 	}
 
-	// Validate repository state
-	if err := uc.repo.ValidateRepoState(ctx, user); err != nil {
-		return user, NewConflictError("User", err)
-	}
-
 	mixture, err := uc.service.HashPassword(user.Credential.Password)
 	if err != nil {
 		return user, NewServiceError("User", err)
