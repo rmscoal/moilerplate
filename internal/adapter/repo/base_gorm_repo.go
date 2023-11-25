@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
 	"gorm.io/gorm"
 )
 
@@ -119,8 +120,8 @@ func (repo *baseRepo) TranslateError(err error) error {
 	}
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return fmt.Errorf("record not found")
+		return usecase.ErrNotFound
 	}
 
-	return fmt.Errorf("internal server error")
+	return usecase.ErrUnexpected
 }

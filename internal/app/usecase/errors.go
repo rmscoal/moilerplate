@@ -89,7 +89,15 @@ func NewDomainError(domain string, err error) error {
 }
 
 func NewRepositoryError(domain string, err error) error {
-	return NewError(domain+" Repository", 500, ErrUnexpected, err)
+	domain = domain + " Repository"
+	switch {
+	case errors.Is(err, ErrUnexpected):
+		return NewError(domain, 500, ErrUnexpected, err)
+	case errors.Is(err, ErrNotFound):
+		return NewNotFoundError(domain, err)
+	default:
+		return NewConflictError(domain, err)
+	}
 }
 
 func NewServiceError(domain string, err error) error {
