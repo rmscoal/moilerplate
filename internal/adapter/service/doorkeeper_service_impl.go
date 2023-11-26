@@ -111,11 +111,7 @@ func (s *doorkeeperService) extractFromMixtures(hashToExtract []byte, skipper in
 func (s *doorkeeperService) compareHashes(password string, salt, hashToCompare []byte) bool {
 	hash := pbkdf2.Key([]byte(password), salt, s.dk.GetHashIter(), s.dk.GetHashKeyLen(), s.dk.GetHasherFunc())
 
-	if subtle.ConstantTimeCompare(hash, hashToCompare) == 1 {
-		return true
-	}
-
-	return false
+	return subtle.ConstantTimeCompare(hash, hashToCompare) == 1
 }
 
 /*
@@ -143,11 +139,11 @@ func (s *doorkeeperService) GenerateUserTokens(user domain.User) (vo.UserToken, 
 func (s *doorkeeperService) GenerateAccessToken(user domain.User) (res string, err error) {
 	now := user.Credential.Tokens.IssuedAt.UTC()
 	claims := jwt.MapClaims{
-		"iss":    s.dk.GetIssuer(),
-		"eat":    now.Add(s.dk.AccessDuration).Unix(),
-		"iat":    now.Unix(),
-		"userId": user.Id,
-		"nbf":    now.Unix(),
+		"iss": s.dk.GetIssuer(),
+		"eat": now.Add(s.dk.AccessDuration).Unix(),
+		"iat": now.Unix(),
+		"sub": user.Id,
+		"nbf": now.Unix(),
 	}
 
 	res, err = jwt.NewWithClaims(s.dk.GetSignMethod(), claims).SignedString(s.dk.GetPrivKey())
@@ -182,11 +178,11 @@ func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) 
 		return "", err
 	}
 
-	if err := s.verifyClaims(ctx, claims, "userId"); err != nil {
+	if err := s.verifyClaims(ctx, claims, "sub"); err != nil {
 		return "", err
 	}
 
-	return claims["userId"].(string), nil
+	return claims["sub"].(string), nil
 }
 
 func (s *doorkeeperService) VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error) {

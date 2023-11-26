@@ -33,7 +33,7 @@ func (c *Config) newDoorkeeperConfig() {
 		signingMethod: strings.ToUpper(os.Getenv("DOORKEEPER_SIGNING_METHOD")),
 		signSize:      strings.ToLower(os.Getenv("DOORKEEPER_SIGN_SIZE")),
 		certPath:      strings.ToLower(os.Getenv("DOORKEEPER_CERT_PATH")),
-		issuer:        strings.ToUpper(os.Getenv("DOORKEEPER_ISSUER")),
+		issuer:        os.Getenv("DOORKEEPER_ISSUER"),
 		hashMethod:    strings.ToUpper(os.Getenv("DOORKEEPER_HASH_METHOD")),
 		secretKey:     os.Getenv("DOORKEEPER_SECRET_KEY"),
 	}
