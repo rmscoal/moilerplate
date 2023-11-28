@@ -43,6 +43,7 @@ type Postgres struct {
 	maxOpenConn     int           // manages the maximum number of connectios to the database
 	maxLifeTime     time.Duration // manages the maximum amount of time connection may be reused.
 	maxConnAttempts int           // manages the maximum attemp to ping the database using the connection
+	mode            string        // the mode of database
 
 	ORM  *gorm.DB
 	Pool *sql.DB
@@ -107,6 +108,10 @@ func (pg *Postgres) connect(url string) {
 	}), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("FATAL - Unable to connect to postgres: %s", err)
+	}
+
+	if pg.mode == "DEVELOPMENT" {
+		gormdb = gormdb.Debug()
 	}
 
 	pg.ORM = gormdb

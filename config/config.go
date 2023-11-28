@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"sync"
 	"unicode"
-
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -41,11 +39,6 @@ func GetConfig() *Config {
 // only be called during the creational of a new config instance.
 // It is also the place to register your configs.
 func (c *Config) load() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Println("WARNING - Environment is not loading from .env")
-	}
-
 	// Register here for your new configs with third-parties.
 	c.newServerConfig()
 	c.newDbConfig()

@@ -11,7 +11,6 @@ import (
 )
 
 type appConfig struct {
-	environment             string
 	logPath                 string
 	raterLimit              int
 	burstLimit              int
@@ -25,8 +24,7 @@ type appConfig struct {
 // Config.
 func (c *Config) newAppConfig() {
 	a := appConfig{
-		environment: strings.ToUpper(os.Getenv("ENVIRONMENT")),
-		logPath:     strings.ToLower(os.Getenv("LOG_PATH")),
+		logPath: strings.ToLower(os.Getenv("LOG_PATH")),
 	}
 
 	if err := a.parse(); err != nil {
@@ -45,12 +43,6 @@ func (c *Config) newAppConfig() {
 func (a appConfig) validate() error {
 	return validation.ValidateStruct(&a,
 		validation.Field(&a.logPath, validation.Required),
-		validation.Field(&a.environment, validation.Required, validation.In(
-			"DEVELOPMENT",
-			"TESTING",
-			"STAGING",
-			"PRODUCTION",
-		)),
 	)
 }
 
@@ -86,10 +78,6 @@ func (a *appConfig) parse() (err error) {
 }
 
 // Getter functions for getting app configurations
-func (a appConfig) Environment() string {
-	return a.environment
-}
-
 func (a appConfig) LogPath() string {
 	return a.logPath
 }

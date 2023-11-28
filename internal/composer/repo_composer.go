@@ -16,21 +16,14 @@ type IRepoComposer interface {
 }
 
 type repoComposer struct {
-	db  *postgres.Postgres
-	env string
+	db *postgres.Postgres
 }
 
-func NewRepoComposer(db *postgres.Postgres, env string) IRepoComposer {
+func NewRepoComposer(db *postgres.Postgres) IRepoComposer {
 	comp := new(repoComposer)
-	comp.env = env
 	comp.db = db
 
 	comp.Migrate()
-
-	switch comp.env {
-	case "DEVELOPMENT":
-		comp.setToDebug()
-	}
 
 	return comp
 }
@@ -45,10 +38,6 @@ func (c *repoComposer) UserProfileRepo() repo.IUserProfileRepo {
 }
 
 // -------------- Setups --------------
-func (c *repoComposer) setToDebug() {
-	c.db.ORM = c.db.ORM.Debug()
-}
-
 func (c *repoComposer) Migrate() {
 	if err := c.db.ORM.AutoMigrate(
 		model.GetAllRelationalModels()...,
