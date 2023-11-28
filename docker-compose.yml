@@ -8,7 +8,6 @@ services:
     image: moilerplate-app
     restart: always
     environment:
-      - ENVIRONMENT=STAGING
       - SERVER_HOST=localhost
       - SERVER_PORT=8082
       - LOG_PATH=logs/log.txt

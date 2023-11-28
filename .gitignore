@@ -14,5 +14,9 @@ go.sum
 # air hot reload
 tmp
 
-# Cert
+# Application Cert
 cert
+
+# Server TLS/SSL Certificate
+server.crt
+server.key
