@@ -31,3 +31,9 @@ func MaxConnLifetime(duration time.Duration) Option {
 		}
 	}
 }
+
+func SetMode(mode string) Option {
+	return func(c *Postgres) {
+		c.mode = mode
+	}
+}
