@@ -17,4 +17,4 @@ COPY --from=builder /app/moilerplate-app /src/moilerplate-app
 
 EXPOSE 80
 
-ENTRYPOINT ["/src/moilerplate-app"]
+ENTRYPOINT ["/src/moilerplate-app server"]
