@@ -28,6 +28,7 @@ It is a boilerplate for monolithic backend application that prioritizes security
   - `internal/composer` acts as the manager to store all usecase, infrastructure and service layer for easier management.<br>
 
 ## How to use Moilerplate
+### Setting up
 In general, Moilerplate has an in-house package named `doorkeeper` that manages password hashes and JWTs. You can customize which signing method you want to use, either symmetric or asymmetric.<br>
 If you're opting for asymmetric option, you need to make a new folder that stores the private and public key. For example, if you're using RSA as your signing method, you can follow these steps:
 1. Create a folder say `cert`.
@@ -39,7 +40,8 @@ If instead you're using symmetric option you could:
 1. Register the secret key in the `DOORKEEPER_SECRET_KEY` environment variable either in `.env` or `docker-compose.yml` (for docker).
 2. Keep in mind that you should not fill the `DOORKEEPER_CERT_PATH` environment variable.
 
-Next we can either start the app via docker or normal. I also provided a hot reload docker file in `dev.dockerfile`. Try it out
+### Starting Moilerplate
+Moilerplate provides a simple cli for you to start the server. Running for example `go run . server -h` will print the available options/flags to use. I recommend using [air](https://github.com/cosmtrek/air) for hot reload. I have provided the `.air.toml` for you. Or, you can run via docker.
 
 ## What's already included in Moilerplate?
 ### Security

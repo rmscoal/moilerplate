@@ -2,7 +2,7 @@ package httpserver
 
 import (
 	"context"
-	"errors"
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
@@ -27,7 +27,9 @@ var (
 type Server struct {
 	server          *http.Server
 	shutdownTimeout time.Duration
-	ran             bool
+	withSecure      bool
+	serverKeyPath   string
+	serverCrtPath   string
 }
 
 // NewServer function    creates a new server and
@@ -59,25 +61,48 @@ func NewServer(handler http.Handler, opts ...Option) *Server {
 	return serverSingleInstance
 }
 
-func (s *Server) CheckConn() error {
-	if !s.ran {
-		if serverSingleInstance == nil {
-			return errors.New("Server has not yet been initialized")
-		}
+// implementSecure configures the TLS for the server
+func (s *Server) implementSecure() {
+	certPair, err := tls.LoadX509KeyPair(s.serverCrtPath, s.serverKeyPath)
+	if err != nil {
+		log.Fatalln("Failed to start web server", err)
 	}
 
-	return nil
+	tlsConfig := new(tls.Config)
+	tlsConfig.NextProtos = []string{"http/1.1", "http/2"}
+	tlsConfig.MinVersion = tls.VersionTLS12
+
+	tlsConfig.Certificates = []tls.Certificate{
+		certPair, /** add other certificates here **/
+	}
+
+	tlsConfig.ClientAuth = tls.VerifyClientCertIfGiven
+	tlsConfig.CurvePreferences = []tls.CurveID{
+		tls.CurveP521,
+		tls.CurveP384,
+		tls.CurveP256,
+	}
+	tlsConfig.CipherSuites = []uint16{
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	}
+
+	s.server.TLSConfig = tlsConfig
 }
 
 // run method    runs the server and also handles
 // the graceful shutdown.
 func (s *Server) run() {
 	go func() {
-		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+		if s.withSecure {
+			if err := s.server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("listen: %s\n", err)
+			}
+		} else {
+			if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("listen: %s\n", err)
+			}
 		}
-
-		s.ran = true
 	}()
 
 	quit := make(chan os.Signal, 1)
