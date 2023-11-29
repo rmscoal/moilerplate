@@ -31,13 +31,24 @@ func NewAppCLI() *app {
 }
 
 func (a *app) Synopsis() string {
-	return "App is the entrypoint of running the server with several options"
+	return "runs the server"
 }
 
 func (a *app) Help() string {
-	return `Usage: server
+	return `
+	Usage: server [--with-secure] [--help | -h] [--cert=<cert_path>] [--key=<key_path>] [--env-path=<env_path>]
+	              [--mode=<DEVELOPMENT|TESTING|PRODUCTION>]
+	Spins up the server...
+
+		--mode            start the server in either DEVELOPMENT, TESTING, or PRODUCTION mode
 	
-	This command starts the server
+	If you want to start the server with TLS enabled, these flags might be useful:
+		--with-secure     with-secure will start the server using TLS enabled
+		--cert            provide with the certificate path
+		--key             provide with the key path
+	
+	If you want to provide the app to read from provided dot env files, these flags might be useful:
+		--env-path        provide with the dot env file path
 	`
 }
 
