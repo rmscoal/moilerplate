@@ -57,10 +57,3 @@ Everytime a user logs in, his/her password is being rerotated with a different r
 > I also believe that there are always a room for improvement in the security applied in Moilerplate and I'm open to suggestions.
 
 ***Last but not least, I hope you enjoy using Moilerplate and always modify this boilerplate to fit your usecase!***
-
-### Roadmap
-[X] Don't use user.id in JWT claims
-[X] http2
-[ ] Use system fingerprint for extra security and use other type of database just for fun (NoSQL/Key-value)
-[ ] Encryption in-use with, User Specific Key
-[ ] Swagger?
