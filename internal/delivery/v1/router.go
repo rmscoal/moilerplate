@@ -5,6 +5,8 @@ import (
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/composer"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/middleware"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer) {
@@ -25,4 +27,6 @@ func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUse
 			NewUserProfileController(ptd, ucComposer.UserProfileUseCase())
 		}
 	}
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 }

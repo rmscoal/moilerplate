@@ -10,14 +10,14 @@ import (
 type BaseControllerV1 struct{}
 
 type Data struct {
-	ApiVersion string `json:"apiVersion,omitempty"`
-	Status     string `json:"status,omitempty"`
+	ApiVersion string `json:"apiVersion,omitempty" example:"1.0"`
+	Status     string `json:"status,omitempty" example:"OK"`
 	Data       any    `json:"data,omitempty"`
-	Paging     any    `json:"paging,omitempty"`
+	Paging     any    `json:"paging,omitempty" extensions:"x-nullable,x-omitempty"`
 }
 
 type Error struct {
-	ApiVersion string `json:"apiVersion,omitempty"`
+	ApiVersion string `json:"apiVersion,omitempty" example:"1.0"`
 	Error      any    `json:"error,omitempty"`
 }
 

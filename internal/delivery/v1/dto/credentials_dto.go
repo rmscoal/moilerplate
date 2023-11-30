@@ -1,17 +1,17 @@
 package dto
 
 type SignUpRequest struct {
-	FirstName   string `json:"firstName,omitempty"`
-	LastName    string `json:"lastName,omitempty"`
-	Username    string `json:"username,omitempty"`
-	Password    string `json:"password,omitempty"`
-	Email       string `json:"email,omitempty"`
-	PhoneNumber string `json:"phoneNumber,omitempty"`
+	FirstName   string `json:"firstName,omitempty" example:"FirstName"`
+	LastName    string `json:"lastName,omitempty" example:"LastName"`
+	Username    string `json:"username,omitempty" example:"Username"`
+	Password    string `json:"password,omitempty" example:"verystrongpassword"`
+	Email       string `json:"email,omitempty" example:"email@email.com"`
+	PhoneNumber string `json:"phoneNumber,omitempty" example:"628123456789"`
 }
 
 type LoginRequest struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username string `json:"username,omitempty" example:"Username"`
+	Password string `json:"password,omitempty" example:"verystrongpassword"`
 }
 
 type TokenResponse struct {
