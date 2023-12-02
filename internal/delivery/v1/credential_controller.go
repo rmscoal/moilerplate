@@ -92,6 +92,21 @@ func (controller *CredentialController) loginHandler(c *gin.Context) {
 	controller.Ok(c, mapper.Credential.UserDomainToTokenResponse(user))
 }
 
+// RefreshHandler godoc
+//
+//	@Summary		Refresh handler
+//	@Description	Handles requesting a new set of access and refresh token from the given previous refresh token
+//	@Tags			Credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			refreshRequest	body		dto.RefreshRequest					true	"Refresh token request body"
+//	@Success		200				{object}	model.Data{data=dto.TokenResponse}	"Token response consisting of access and refresh token"
+//	@Failure		400				{object}	model.Error{error=usecase.AppError}
+//	@Failure		401				{object}	model.Error{error=usecase.AppError}
+//	@Failure		404				{object}	model.Error{error=usecase.AppError}
+//	@Failure		422				{object}	model.Error{error=usecase.AppError}
+//	@Failure		500				{object}	model.Error{error=usecase.AppError}
+//	@Router			/credentials/refresh [post]
 func (controller *CredentialController) refreshHandler(c *gin.Context) {
 	var raw dto.RefreshRequest
 	if err := c.ShouldBindBodyWith(&raw, binding.JSON); err != nil {

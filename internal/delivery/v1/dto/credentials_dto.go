@@ -21,7 +21,7 @@ type TokenResponse struct {
 }
 
 type RefreshRequest struct {
-	RefreshToken string `json:"refreshToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty" example:"refreshTokenHere"`
 }
 
 type RefreResponse TokenResponse
