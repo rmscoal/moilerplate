@@ -3,7 +3,9 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/middleware"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/dto"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/dto/mapper"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/model"
@@ -11,15 +13,20 @@ import (
 
 type CredentialController struct {
 	model.BaseControllerV1
-	uc usecase.ICredentialUseCase
+	uc  usecase.ICredentialUseCase
+	svc service.IRaterService
 }
 
-func NewCredentialController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase) {
+func NewCredentialController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase, svc service.IRaterService) {
 	controller := new(CredentialController)
 	controller.uc = uc
+	controller.svc = svc
 
 	r := rg.Group("/credentials")
 	{
+		// Rate limiting middleware - For all credentials endpoint group
+		r.Use(middleware.NewMiddleware().RateLimiterMiddleware(controller.svc))
+
 		r.POST("/signup", controller.signupHandler)
 		r.POST("/login", controller.loginHandler)
 		r.POST("/refresh", controller.refreshHandler)

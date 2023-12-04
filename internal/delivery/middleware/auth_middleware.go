@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,19 @@ func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFu
 		}
 
 		m.addToContext(c, "userId", user.Id)
+		c.Next()
+	}
+}
+
+func (m *Middleware) AdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cookie, err := c.Cookie("x-session-key")
+		if err != nil {
+			c.Redirect(http.StatusMovedPermanently, "auth")
+			return
+		}
+
+		println("Cookie", cookie)
 		c.Next()
 	}
 }

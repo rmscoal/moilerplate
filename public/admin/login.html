@@ -1,0 +1,46 @@
+{{ define "admin/login.html" }}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swagger Documentation Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'JetBrains Mono', monospace;
+        height: 100vh;
+        width: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+  </head>
+
+  <body>
+      <form id="loginForm">
+        <label>Enter documentation key:</label>
+        <input type="text" id="key" name="key" placeholder="Enter admin key..." required>
+        <button type="submit">Submit</button>
+      </form>
+
+      <script>
+        const loginForm = document.getElementById("loginForm"); 
+        loginForm.addEventListener("submit", submit);
+
+        function submit(event) {
+          event.preventDefault();
+          const form = new FormData(loginForm);
+
+          for ([key, value] of form) {
+            console.log("Key:", key);
+            console.log("Value:", value);
+          }
+        }
+      </script>
+  </body>
+</html>
+{{ end }}
