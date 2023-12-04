@@ -27,6 +27,11 @@ func (service *DoorkeeperServiceMock) GenerateUserTokens(user domain.User) (vo.U
 	return args.Get(0).(vo.UserToken), args.Error(1)
 }
 
+func (service *DoorkeeperServiceMock) VerifyAdminKey(adminKey string) error {
+	args := service.Called(adminKey)
+	return args.Error(0)
+}
+
 func (service *DoorkeeperServiceMock) VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error) {
 	args := service.Called(ctx, tk)
 	return args.String(0), args.Error(1)

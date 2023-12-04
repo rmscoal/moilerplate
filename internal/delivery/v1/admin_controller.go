@@ -24,7 +24,7 @@ func NewAdminController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase) {
 	r := rg.Group("/docs")
 	{
 		r.GET("auth", controller.loginHandler)
-		r.GET(":regex", middleware.NewMiddleware().AdminMiddleware(),
+		r.GET(":regex", middleware.NewMiddleware().AdminMiddleware(uc),
 			ginSwagger.WrapHandler(
 				swaggerFiles.Handler,
 				ginSwagger.DefaultModelsExpandDepth(-1),

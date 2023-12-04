@@ -47,6 +47,12 @@ func RegisterSecretKey(secret string) Option {
 	}
 }
 
+func RegisterAdminKey(secret string) Option {
+	return func(d *Doorkeeper) {
+		d.adminKey = secret
+	}
+}
+
 func RegisterHasherFunc(alg string) Option {
 	return func(d *Doorkeeper) {
 		switch alg {

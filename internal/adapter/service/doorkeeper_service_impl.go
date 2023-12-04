@@ -36,6 +36,20 @@ func NewDoorkeeperService(dk *doorkeeper.Doorkeeper) *doorkeeperService {
 }
 
 /*
+---------- Admin Section ----------
+*/
+func (s *doorkeeperService) VerifyAdminKey(adminKey string) error {
+	if subtle.ConstantTimeCompare(
+		utils.ConvertStringToByteSlice(adminKey),
+		utils.ConvertStringToByteSlice(s.dk.GetAdminKey()),
+	) == 0 {
+		return fmt.Errorf("invalid admin key")
+	}
+
+	return nil
+}
+
+/*
 ---------- Hashing Section ----------
 */
 func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
