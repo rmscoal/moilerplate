@@ -88,7 +88,7 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 // VerifyAdmin verifies that the admin key is correct as defined. This is used
 // to access swagger documentation as of now (change this when it might be used
 // for other usecase too).
-func (uc *credentialUseCase) AuthAdmin(ctx context.Context, adminKey string) error {
+func (uc *credentialUseCase) VerifyAdmin(ctx context.Context, adminKey string) error {
 	if err := uc.service.VerifyAdminKey(adminKey); err != nil {
 		return NewUnauthorizedError(err)
 	}

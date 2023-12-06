@@ -34,16 +34,13 @@ func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFu
 
 func (m *Middleware) AdminMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		admin, err := c.Cookie("x-admin-key")
+		session, err := c.Cookie("x-session-key")
 		if err != nil {
-			c.Redirect(http.StatusMovedPermanently, "auth")
+			c.Redirect(http.StatusMovedPermanently, "login")
 			return
 		}
 
-		if err := uc.AuthAdmin(c.Request.Context(), admin); err != nil {
-			m.Unauthorized(c, err)
-			return
-		}
+		println("Session", session)
 
 		c.Next()
 	}

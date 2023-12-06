@@ -12,7 +12,7 @@
       body {
         font-family: 'JetBrains Mono', monospace;
         height: 100vh;
-        width: 100vh;
+        width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -21,26 +21,42 @@
   </head>
 
   <body>
+    <div style="display: block;">
       <form id="loginForm">
         <label>Enter documentation key:</label>
         <input type="text" id="key" name="key" placeholder="Enter admin key..." required>
         <button type="submit">Submit</button>
       </form>
+      <span style="color: red;" id="err-message-span"></span>
+    </div>
 
-      <script>
-        const loginForm = document.getElementById("loginForm"); 
-        loginForm.addEventListener("submit", submit);
+    <script>
+      const loginForm = document.getElementById("loginForm"); 
+      loginForm.addEventListener("submit", submit);
 
-        function submit(event) {
-          event.preventDefault();
-          const form = new FormData(loginForm);
+      function submit(event) {
+        event.preventDefault();
+        const form = new FormData(loginForm);
 
-          for ([key, value] of form) {
-            console.log("Key:", key);
-            console.log("Value:", value);
+        fetch("/api/v1/docs/verify", {
+          method: "POST",
+          body: form,
+        }).then(response => {
+          if (!response.ok) {
+            return response.json();
           }
-        }
-      </script>
+
+          if (response.redirected) {
+            window.location.href = response.url;
+            return;
+          }
+        }).then(data => {
+          document.getElementById("err-message-span").innerHTML = "Error: " + data?.error?.errors[0]?.message;
+        }).catch(err => {
+          document.getElementById("err-message-span").innerHTML = "An unknown error has occured";
+        })
+      }
+    </script>
   </body>
 </html>
 {{ end }}
