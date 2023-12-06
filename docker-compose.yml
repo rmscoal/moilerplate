@@ -35,6 +35,8 @@ services:
       - DOORKEEPER_SECRET_KEY=verystrongsecretkey
       # Keep empty if you want to use HMAC
       - DOORKEEPER_CERT_PATH=
+      # Admin key for accessing documentation resources or more
+      - DOORKEEPER_ADMIN_KEY=verystrongpassword
       - DOORKEEPER_ACCESS_TOKEN_DURATION=1h
       - DOORKEEPER_REFRESH_TOKEN_DURATION=24h
     ports:
