@@ -3,10 +3,10 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/dto"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/dto/mapper"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/model"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/dto"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/dto/mapper"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/model"
 )
 
 type UserProfileController struct {

@@ -3,10 +3,10 @@ package composer
 import (
 	"log"
 
-	impl "github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/postgres"
+	impl "github.com/rmscoal/moilerplate/internal/adapter/repo"
+	"github.com/rmscoal/moilerplate/internal/adapter/repo/model"
+	"github.com/rmscoal/moilerplate/internal/app/repo"
+	"github.com/rmscoal/moilerplate/pkg/postgres"
 )
 
 type IRepoComposer interface {

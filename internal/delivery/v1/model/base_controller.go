@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
 )
 
 type BaseControllerV1 struct{}

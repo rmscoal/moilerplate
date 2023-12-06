@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/rmscoal/go-restful-monolith-boilerplate/cmd"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/docs"
+	"github.com/rmscoal/moilerplate/cmd"
+	"github.com/rmscoal/moilerplate/docs"
 )
 
 func main() {

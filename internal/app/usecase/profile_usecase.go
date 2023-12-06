@@ -3,8 +3,8 @@ package usecase
 import (
 	"context"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/app/repo"
+	"github.com/rmscoal/moilerplate/internal/domain"
 )
 
 type userProfileUseCase struct {

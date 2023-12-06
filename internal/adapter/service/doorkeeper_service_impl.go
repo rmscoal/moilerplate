@@ -16,10 +16,10 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/utils"
+	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	"golang.org/x/crypto/pbkdf2"
 )
 

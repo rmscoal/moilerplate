@@ -1,9 +1,9 @@
 package mapper
 
 import (
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/adapter/repo/model"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
 )
 
 func MapUserDomainToNewAuthCredModel(user domain.User) model.AuthorizationCredential {

@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
+	"github.com/rmscoal/moilerplate/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )

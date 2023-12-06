@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
 )
 
 type IDoorkeeperService interface {

@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/model"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/model"
 )
 
 // Middleware struct server as the parent class of all

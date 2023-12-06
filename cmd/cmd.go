@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/mitchellh/cli"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/cmd/app"
+	"github.com/rmscoal/moilerplate/cmd/app"
 )
 
 func Execute() {

@@ -9,14 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joho/godotenv"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/config"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/composer"
-	v1 "github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
-	httpserver "github.com/rmscoal/go-restful-monolith-boilerplate/pkg/http"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/postgres"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/rater"
+	"github.com/rmscoal/moilerplate/config"
+	"github.com/rmscoal/moilerplate/internal/composer"
+	v1 "github.com/rmscoal/moilerplate/internal/delivery/v1"
+	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
+	httpserver "github.com/rmscoal/moilerplate/pkg/http"
+	"github.com/rmscoal/moilerplate/pkg/logger"
+	"github.com/rmscoal/moilerplate/pkg/postgres"
+	"github.com/rmscoal/moilerplate/pkg/rater"
 )
 
 type app struct {

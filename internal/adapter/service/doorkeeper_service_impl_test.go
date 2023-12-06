@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
+	"github.com/rmscoal/moilerplate/internal/app/service"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )

@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain"
 )
 
 type IUserProfileRepo interface {

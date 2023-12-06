@@ -1,8 +1,8 @@
 package composer
 
 import (
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/app/service"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
 )
 
 type IUseCaseComposer interface {

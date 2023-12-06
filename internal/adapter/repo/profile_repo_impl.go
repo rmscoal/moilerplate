@@ -3,9 +3,9 @@ package repo
 import (
 	"context"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/mapper"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/repo/model"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/adapter/repo/mapper"
+	"github.com/rmscoal/moilerplate/internal/adapter/repo/model"
+	"github.com/rmscoal/moilerplate/internal/domain"
 )
 
 type userProfileRepo struct {

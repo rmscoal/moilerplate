@@ -1,4 +1,4 @@
-module github.com/rmscoal/go-restful-monolith-boilerplate
+module github.com/rmscoal/moilerplate
 
 go 1.20
 

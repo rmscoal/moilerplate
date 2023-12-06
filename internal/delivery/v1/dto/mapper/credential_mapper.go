@@ -1,9 +1,9 @@
 package mapper
 
 import (
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/dto"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/dto"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
 )
 
 // Add type for namespace

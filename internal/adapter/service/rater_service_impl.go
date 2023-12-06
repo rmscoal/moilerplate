@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/rater"
+	"github.com/rmscoal/moilerplate/pkg/rater"
 )
 
 type raterService struct {

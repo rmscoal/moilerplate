@@ -2,9 +2,9 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/composer"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/middleware"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/logger"
+	"github.com/rmscoal/moilerplate/internal/composer"
+	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
+	"github.com/rmscoal/moilerplate/pkg/logger"
 	// swaggerFiles "github.com/swaggo/files"
 	// ginSwagger "github.com/swaggo/gin-swagger"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
 )
 
 type AuthHeader struct {

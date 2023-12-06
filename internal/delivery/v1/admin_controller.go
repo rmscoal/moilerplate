@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/middleware"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/delivery/v1/model"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/model"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"

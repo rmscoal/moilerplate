@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/repo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/domain/vo"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
+	"github.com/rmscoal/moilerplate/internal/app/repo"
+	"github.com/rmscoal/moilerplate/internal/app/service"
+	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/utils"
 )
 
 type credentialUseCase struct {

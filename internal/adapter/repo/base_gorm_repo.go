@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
+	"github.com/rmscoal/moilerplate/internal/app/usecase"
 	"gorm.io/gorm"
 )
 

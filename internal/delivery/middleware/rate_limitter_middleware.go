@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
+	"github.com/rmscoal/moilerplate/internal/app/service"
 )
 
 // Thanks to: https://blog.logrocket.com/rate-limiting-go-application/

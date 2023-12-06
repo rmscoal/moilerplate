@@ -1,10 +1,10 @@
 package composer
 
 import (
-	impl "github.com/rmscoal/go-restful-monolith-boilerplate/internal/adapter/service"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/service"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/doorkeeper"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/pkg/rater"
+	impl "github.com/rmscoal/moilerplate/internal/adapter/service"
+	"github.com/rmscoal/moilerplate/internal/app/service"
+	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
+	"github.com/rmscoal/moilerplate/pkg/rater"
 )
 
 type IServiceComposer interface {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
+	"github.com/rmscoal/moilerplate/internal/utils"
 	"golang.org/x/crypto/sha3"
 )
 
