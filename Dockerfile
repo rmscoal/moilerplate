@@ -6,6 +6,8 @@ WORKDIR /app
 COPY . .
 
 RUN go mod tidy
+RUN go install github.com/swaggo/swag/cmd/swag@latest
+RUN swag init && swag fmt
 RUN CGO_ENABLED=0 GOOS=linux go build -o moilerplate-app
 
 # Stage 2: Create the final image
@@ -15,6 +17,4 @@ RUN mkdir logs/
 
 COPY --from=builder /app/moilerplate-app /src/moilerplate-app
 
-EXPOSE 80
-
-ENTRYPOINT ["/src/moilerplate-app server --mode=PRODUCTION"]
+ENTRYPOINT ["/src/moilerplate-app", "server", "--mode=PRODUCTION"]

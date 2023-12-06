@@ -7,6 +7,7 @@ COPY . .
 
 RUN mkdir logs
 
+RUN go install github.com/swaggo/swag/cmd/swag@latest
 RUN go install github.com/cosmtrek/air@latest
 RUN go mod tidy
 
