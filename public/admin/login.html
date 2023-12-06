@@ -1,62 +1,64 @@
 {{ define "admin/login.html" }}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swagger Documentation Sign In</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'JetBrains Mono', monospace;
-        height: 100vh;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-    </style>
-  </head>
 
-  <body>
-    <div style="display: block;">
-      <form id="loginForm">
-        <label>Enter documentation key:</label>
-        <input type="text" id="key" name="key" placeholder="Enter admin key..." required>
-        <button type="submit">Submit</button>
-      </form>
-      <span style="color: red;" id="err-message-span"></span>
-    </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swagger Documentation Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      height: 100vh;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
+</head>
 
-    <script>
-      const loginForm = document.getElementById("loginForm"); 
-      loginForm.addEventListener("submit", submit);
+<body>
+  <div style="display: block;">
+    <form id="loginForm">
+      <label>Enter documentation key:</label>
+      <input type="text" id="key" name="key" placeholder="Enter admin key..." required>
+      <button type="submit">Submit</button>
+    </form>
+    <span style="color: red;" id="err-message-span"></span>
+  </div>
 
-      function submit(event) {
-        event.preventDefault();
-        const form = new FormData(loginForm);
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", submit);
 
-        fetch("/api/v1/docs/verify", {
-          method: "POST",
-          body: form,
-        }).then(response => {
-          if (!response.ok) {
-            return response.json();
-          }
+    function submit(event) {
+      event.preventDefault();
+      const form = new FormData(loginForm);
 
-          if (response.redirected) {
-            window.location.href = response.url;
-            return;
-          }
-        }).then(data => {
-          document.getElementById("err-message-span").innerHTML = "Error: " + data?.error?.errors[0]?.message;
-        }).catch(err => {
-          document.getElementById("err-message-span").innerHTML = "An unknown error has occured";
-        })
-      }
-    </script>
-  </body>
+      fetch("/api/v1/docs/verify", {
+        method: "POST",
+        body: form,
+      }).then(response => {
+        if (!response.ok) {
+          return response.json();
+        }
+
+        if (response.redirected) {
+          window.location.href = response.url;
+          return;
+        }
+      }).then(data => {
+        if (!data) return;
+        document.getElementById("err-message-span").innerHTML = "Error: " + data?.error?.errors[0]?.message;
+      }).catch(err => {
+        document.getElementById("err-message-span").innerHTML = "An unknown error has occured";
+      })
+    }
+  </script>
+</body>
+
 </html>
 {{ end }}
