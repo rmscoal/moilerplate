@@ -2,7 +2,6 @@ package v1
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/app/usecase"
@@ -24,8 +23,8 @@ func NewAdminController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase) {
 
 	r := rg.Group("/docs")
 	{
-		r.GET("login", controller.loginHandler)
-		r.POST("login", controller.verifyHandler)
+		r.GET("login", controller.loginPageHandler)
+		r.POST("login", controller.loginHandler)
 		r.GET(":regex", middleware.NewMiddleware().AdminMiddleware(controller.uc),
 			ginSwagger.WrapHandler(
 				swaggerFiles.Handler,
@@ -35,18 +34,19 @@ func NewAdminController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase) {
 	}
 }
 
-func (controller *AdminController) loginHandler(c *gin.Context) {
+func (controller *AdminController) loginPageHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "admin/login.html", gin.H{})
 }
 
-func (controller *AdminController) verifyHandler(c *gin.Context) {
+func (controller *AdminController) loginHandler(c *gin.Context) {
 	adminKey := c.PostForm("key")
 
-	if err := controller.uc.VerifyAdmin(c.Request.Context(), adminKey); err != nil {
-		controller.Unauthorized(c, err)
+	session, err := controller.uc.AdminLogin(c.Request.Context(), adminKey)
+	if err != nil {
+		controller.SummariesUseCaseError(c, err)
 		return
 	}
 
-	c.SetCookie("x-session-key", "ur mom", int(time.Now().Add(1*time.Hour).Unix()), "/api/v1/docs", "localhost", false, true)
+	c.SetCookie("x-session-key", session.Session, int(session.Expiry.Unix()), "/api/v1/docs", "localhost", false, true)
 	c.Redirect(http.StatusFound, "index.html")
 }

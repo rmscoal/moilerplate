@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -17,7 +17,7 @@ func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFu
 	return func(c *gin.Context) {
 		var auth AuthHeader
 		if err := c.ShouldBindHeader(&auth); err != nil {
-			m.Unauthorized(c, usecase.NewUnauthorizedError(fmt.Errorf("header not found")))
+			m.Unauthorized(c, usecase.NewUnauthorizedError(errors.New("header not found")))
 			return
 		}
 		auth.Authorization = strings.ReplaceAll(auth.Authorization, "Bearer ", "")
@@ -40,7 +40,10 @@ func (m *Middleware) AdminMiddleware(uc usecase.ICredentialUseCase) gin.HandlerF
 			return
 		}
 
-		println("Session", session)
+		if err := uc.AuthenticateAdmin(c.Request.Context(), session); err != nil {
+			c.Redirect(http.StatusMovedPermanently, "login")
+			return
+		}
 
 		c.Next()
 	}
