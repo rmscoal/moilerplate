@@ -39,6 +39,9 @@ type Doorkeeper struct {
 	hasherFunc func() hash.Hash // This will be used as the hashing method (may on top of PBKD2F)
 	hashKeyLen int              // Special case for PBKD2F key length
 	hashIter   int              // Special case for PBKD2F iterator
+
+	// --- Admin ---
+	adminKey string // key for admins to access app documentation resources. The admin key will be hashed using sha256
 }
 
 var (
@@ -116,6 +119,10 @@ func (d *Doorkeeper) GetPrivKey() interface{} {
 
 func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
 	return reflect.TypeOf(d.signMethod)
+}
+
+func (d *Doorkeeper) GetAdminKey() string {
+	return d.adminKey
 }
 
 func (d *Doorkeeper) loadSecretKeys() {

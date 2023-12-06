@@ -16,6 +16,8 @@ It is a boilerplate for monolithic backend application that prioritizes security
 
 - `testdata` consists of mocks structs for testing.
 
+- `docs` contains swagger documentation.
+
 - `internal` where all the fun begins<br>
   - `internal/domain` stores the domain of the app. I'm trying to follow Domain Driven Design as much as possible here.<br>
   - `internal/delivery` consists of the delivery methods to communicate, like the http endpoints, middlewares, and routers.<br>

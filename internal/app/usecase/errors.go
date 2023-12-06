@@ -28,17 +28,17 @@ var ErrNameMapper = map[error]string{
 }
 
 type AppError struct {
-	Code    int              `json:"code,omitempty"`
+	Code    int              `json:"code,omitempty" example:"400"`
 	Type    error            `json:"-"`
-	Message string           `json:"message,omitempty"`
+	Message string           `json:"message,omitempty" example:"this is error message"`
 	Errors  []AppErrorDetail `json:"errors,omitempty"`
 }
 
 type AppErrorDetail struct {
-	Domain  string `json:"domain,omitempty"`
-	Reason  string `json:"reason,omitempty"`
-	Message string `json:"message,omitempty"`
-	Report  string `json:"report,omitempty"`
+	Domain  string `json:"domain,omitempty" example:"domain error"`
+	Reason  string `json:"reason,omitempty" example:"this is descriptive error reason"`
+	Message string `json:"message,omitempty" example:"this is descriptive error message"`
+	Report  string `json:"report,omitempty" example:"Please report incident to https://your-report.com"`
 }
 
 func (err AppError) Error() string {

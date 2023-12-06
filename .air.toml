@@ -4,15 +4,15 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "./tmp/main server --env-path=.env --with-secure --cert=server.crt --key=server.key"
+  bin = "./tmp/main server --env-path=.env"
   cmd = "go build -o ./tmp/main ."
   delay = 0
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "docs"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = ""
+  full_bin = "swag fmt && swag init && ./tmp/main server --env-path=.env"
   include_dir = []
   include_ext = ["go", "tpl", "tmpl", "html"]
   include_file = []

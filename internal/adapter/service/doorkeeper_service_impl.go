@@ -2,8 +2,12 @@ package service
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -36,8 +40,54 @@ func NewDoorkeeperService(dk *doorkeeper.Doorkeeper) *doorkeeperService {
 }
 
 /*
+---------- Admin Section ----------
+*/
+
+func (s *doorkeeperService) VerifyAdminKey(adminKey string) error {
+	// Since the adminKey is hashed using sha256, we have to compare
+	// by also using sha256.
+	sha := sha256.Sum256(utils.ConvertStringToByteSlice(adminKey))
+	if subtle.ConstantTimeCompare(
+		sha[:],
+		utils.ConvertStringToByteSlice(s.dk.GetAdminKey()),
+	) == 0 {
+		return fmt.Errorf("invalid admin key")
+	}
+
+	return nil
+}
+
+// GenerateSession generates a sessions by the given payload. The payload
+// will be aes encrypted and base64 encoded.
+func (s *doorkeeperService) GenerateSession(payload []byte) (string, error) {
+	encrypted, err := aesGCMEncrypt(utils.ConvertStringToByteSlice(s.dk.GetAdminKey()), payload)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+// ParseSession decode the session and then decrypts it giving back the
+// original payload.
+func (s *doorkeeperService) ParseSession(session string) ([]byte, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(session)
+	if err != nil {
+		return nil, errors.New("failed to decode session")
+	}
+
+	plaintext, err := aesGCMDecrypt(utils.ConvertStringToByteSlice(s.dk.GetAdminKey()), ciphertext)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
+}
+
+/*
 ---------- Hashing Section ----------
 */
+
 func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 	saltLength, err := rand.Int(rand.Reader, big.NewInt(MaxSaltLength-MinSaltLength))
 	if err != nil {
@@ -117,6 +167,7 @@ func (s *doorkeeperService) compareHashes(password string, salt, hashToCompare [
 /*
 ---------- JWT Section ----------
 */
+
 func (s *doorkeeperService) GenerateUserTokens(user domain.User) (vo.UserToken, error) {
 	var userToken vo.UserToken
 
@@ -282,4 +333,50 @@ func (s *doorkeeperService) validateKeys(ctx context.Context, obj map[string]any
 
 	return validation.ValidateWithContext(ctx, keys, validation.Each(validation.Required, validation.In(args...).
 		Error("does not contained required claim")))
+}
+
+/*
+---------- Encryption Section ----------
+*/
+
+func aesGCMEncrypt(key []byte, payload []byte) ([]byte, error) {
+	gcm, err := initAES_GCM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, errors.New("failed to read random")
+	}
+
+	return gcm.Seal(nonce, nonce, payload, nil), nil
+}
+
+func aesGCMDecrypt(key []byte, ciphertext []byte) ([]byte, error) {
+	gcm, err := initAES_GCM(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext) < gcm.NonceSize() {
+		return nil, errors.New("invalid size")
+	}
+
+	nonce, ciphertext := ciphertext[:gcm.NonceSize()], ciphertext[gcm.NonceSize():]
+	return gcm.Open(nil, nonce, ciphertext, nil)
+}
+
+func initAES_GCM(key []byte) (cipher.AEAD, error) {
+	c, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, errors.New("failed to initialize encryption")
+	}
+
+	gcm, err := cipher.NewGCM(c)
+	if err != nil {
+		return nil, errors.New("failed to authenticate admin session")
+	}
+
+	return gcm, nil
 }

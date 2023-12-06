@@ -80,6 +80,7 @@ func (a *app) Run(args []string) int {
 	}
 
 	cfg := config.GetConfig()
+
 	// Postgres .-.
 	pg := postgres.GetPostgres(
 		cfg.Db.URL,
@@ -100,6 +101,7 @@ func (a *app) Run(args []string) int {
 		doorkeeper.RegisterRefreshDuration(cfg.Doorkeeper.RefreshTokenDuration()),
 		doorkeeper.RegisterCertPath(cfg.Doorkeeper.CertPath()),
 		doorkeeper.RegisterSecretKey(cfg.Doorkeeper.SecretKey()),
+		doorkeeper.RegisterAdminKey(cfg.Doorkeeper.AdminKey()),
 	)
 
 	// Rate Limitter .-.
