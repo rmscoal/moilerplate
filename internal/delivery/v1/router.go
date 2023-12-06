@@ -1,17 +1,24 @@
 package v1
 
 import (
+	"embed"
+	"html/template"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/moilerplate/internal/composer"
 	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
 	"github.com/rmscoal/moilerplate/pkg/logger"
-	// swaggerFiles "github.com/swaggo/files"
-	// ginSwagger "github.com/swaggo/gin-swagger"
 )
 
+//go:embed web/*
+var web embed.FS
+
 func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer) {
+	// Load all web html templates
+	htmls := template.Must(template.ParseFS(web, "web/**/*.html"))
+
 	r.Use(middleware.LogRequestMiddleware(logger))
-	r.LoadHTMLGlob("public/**/*")
+	r.SetHTMLTemplate(htmls)
 
 	// API V1 - Parent of all endpoint for V1.
 	v1 := r.Group("/api/v1")
