@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -21,6 +22,61 @@ type credentialUseCase struct {
 func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeperService) ICredentialUseCase {
 	return &credentialUseCase{repo: repo, service: service}
 }
+
+/*
+********************
+Admin Section
+
+Description: As of now admin sections is used to access resource only for developers
+like the swagger documentation.
+********************
+*/
+
+func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (vo.AdminSession, error) {
+	adminSession := vo.AdminSession{
+		// Set the expiry session to 1 hour
+		Expiry: time.Now().Add(1 * time.Hour),
+	}
+
+	if err := uc.service.VerifyAdminKey(adminKey); err != nil {
+		return adminSession, NewUnauthorizedError(err)
+	}
+
+	expiry := utils.ConvertStringToByteSlice(adminSession.Expiry.Format(time.RFC1123))
+	session, err := uc.service.GenerateSession(expiry)
+	if err != nil {
+		return adminSession, NewServiceError("Admin", err)
+	}
+
+	adminSession.Session = session
+	return adminSession, nil
+}
+
+func (uc *credentialUseCase) AuthenticateAdmin(ctx context.Context, session string) error {
+	payload, err := uc.service.ParseSession(session)
+	if err != nil {
+		return NewUnauthorizedError(err)
+	}
+
+	expiry, err := time.Parse(time.RFC1123, string(payload))
+	if err != nil {
+		return NewUnauthorizedError(errors.New("invalid session payload"))
+	}
+
+	if time.Now().After(expiry) {
+		return NewUnauthorizedError(errors.New("session timedout"))
+	}
+
+	return nil
+}
+
+/*
+********************
+User Section
+
+Description: Holds logic for the general usecase of users of the application
+********************
+*/
 
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
 	// Validate user entity
@@ -83,17 +139,6 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	go uc.generateNewHashMixture(user.Id, cred.Password)
 
 	return user, nil
-}
-
-// VerifyAdmin verifies that the admin key is correct as defined. This is used
-// to access swagger documentation as of now (change this when it might be used
-// for other usecase too).
-func (uc *credentialUseCase) VerifyAdmin(ctx context.Context, adminKey string) error {
-	if err := uc.service.VerifyAdminKey(adminKey); err != nil {
-		return NewUnauthorizedError(err)
-	}
-
-	return nil
 }
 
 func (uc *credentialUseCase) Authorize(ctx context.Context, token string) (domain.User, error) {

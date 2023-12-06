@@ -41,7 +41,7 @@ type Doorkeeper struct {
 	hashIter   int              // Special case for PBKD2F iterator
 
 	// --- Admin ---
-	adminKey string // key for admins to access app documentation resources
+	adminKey string // key for admins to access app documentation resources. The admin key will be hashed using sha256
 }
 
 var (

@@ -12,7 +12,12 @@ type ICredentialUseCase interface {
 	Login(ctx context.Context, cred vo.UserCredential) (domain.User, error)
 	Authorize(ctx context.Context, token string) (domain.User, error)
 	Refresh(ctx context.Context, token string) (domain.User, error)
-	VerifyAdmin(ctx context.Context, adminKey string) error
+
+	// AdminLogin handles for admin/developer login by only the admin secret. This
+	// is used to access admin resource such as swagger documentation for now.
+	AdminLogin(ctx context.Context, adminKey string) (vo.AdminSession, error)
+	// AuthenticateAdmin authenticates the admin session.
+	AuthenticateAdmin(ctx context.Context, session string) error
 }
 
 type IUserProfileUseCase interface {

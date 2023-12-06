@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rmscoal/go-restful-monolith-boilerplate/internal/utils"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -47,9 +48,12 @@ func RegisterSecretKey(secret string) Option {
 	}
 }
 
+// RegisterAdminKey registers the admin key and store the hashed using sha256
+// of the key.
 func RegisterAdminKey(secret string) Option {
 	return func(d *Doorkeeper) {
-		d.adminKey = secret
+		sha := sha256.Sum256(utils.ConvertStringToByteSlice(secret))
+		d.adminKey = string(sha[:])
 	}
 }
 
