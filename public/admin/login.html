@@ -38,9 +38,12 @@
       event.preventDefault();
       const form = new FormData(loginForm);
 
-      fetch("/api/v1/docs/verify", {
+      fetch("/api/v1/docs/login", {
         method: "POST",
         body: form,
+        headers: new Headers({
+          "Cache-Control": "no-cache",
+        })
       }).then(response => {
         if (!response.ok) {
           return response.json();
