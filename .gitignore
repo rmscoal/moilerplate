@@ -20,3 +20,6 @@ cert
 # Server TLS/SSL Certificate
 server.crt
 server.key
+
+# Dockerfiles - with creds
+docker/priv.docker-compose.yml
