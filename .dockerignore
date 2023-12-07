@@ -3,14 +3,10 @@
 .gitignore
 .vscode
 .DS_Store
-.env
-.env.development
-.env.production
-.env.staging
-.env.template
+.env.example
 
-# Compose
-docker-compose.yml
+# Docker directory
+docker/
 
 # Jenkins
 Jenkinsfile

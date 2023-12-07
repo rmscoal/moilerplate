@@ -2,8 +2,8 @@ version: "3.0"
 services:
   moilerplate:
     build:
-      context: .
-      dockerfile: dev.dockerfile
+      context: ..
+      dockerfile: docker/http.prod.dockerfile
     container_name: moilerplate-app
     image: moilerplate-app
     restart: always
@@ -47,6 +47,7 @@ services:
       - ./:/app
     depends_on:
       - pg
+
   pg:
     image: postgres:latest
     container_name: moilerplate_pg
