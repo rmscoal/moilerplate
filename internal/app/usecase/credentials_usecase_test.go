@@ -119,8 +119,6 @@ func (suite *CredentialUseCaseTestSuite) TestSignup() {
 		test := VALID_USER_DOMAIN_WITH_ID
 		test.Credential.Password = "HASHED_PASSWORD"
 
-		// Assumes that it passes all validity repo state checks
-		suite.repo.On("ValidateRepoState", TEST_CTX, VALID_USER_DOMAIN).Return(nil).Once()
 		// Assumes HashPassword call returns the hashed password
 		suite.service.On("HashPassword", "PASSWORD").Return([]byte("HASHED_PASSWORD"), nil).Once()
 		// Assumes that it passes constraint checks while persisting record
@@ -158,22 +156,26 @@ func (suite *CredentialUseCaseTestSuite) TestSignup() {
 			assert.Error(suite.T(), err)
 			assert.Equal(suite.T(), test, user)
 		})
+
 		suite.Run("Duplicate Username", func() {
 			test := INVALID_USER_DOMAIN
-			// Assumes that there are duplicate record error
-			suite.repo.On("ValidateRepoState", TEST_CTX, test).Return(NewConflictError("User", errors.New("username taken"))).Once()
+
+			// Hash the user's password
+			suite.service.On("HashPassword", "PASSWORD").Return([]byte("HASHED_PASSWORD"), nil).Once()
+			// Now, we say that there are duplicate error while creating the user
+			suite.repo.On("CreateNewUser", TEST_CTX, mock.AnythingOfType("domain.User")).Return(test, errors.New("username")).Once()
+
 			// Start sign up test
 			uc := NewCredentialUseCase(suite.repo, suite.service)
 			user, err := uc.SignUp(TEST_CTX, test)
-			assert.Error(suite.T(), err, NewConflictError("User", fmt.Errorf("username taken")))
+			assert.Error(suite.T(), err, NewConflictError("User", errors.New("username already exists")))
 			assert.ErrorContains(suite.T(), err, "conflict state")
 			assert.Equal(suite.T(), test, user)
 		})
+
 		suite.Run("Failed Password Hashing", func() {
 			test := VALID_USER_DOMAIN
 
-			// Assumes that it passes all validity repo state checks
-			suite.repo.On("ValidateRepoState", TEST_CTX, VALID_USER_DOMAIN).Return(nil).Once()
 			// Assumes HashPassword call returns the hashed password
 			suite.service.On("HashPassword", "PASSWORD").Return([]byte(nil), errors.New("failed to hash password")).Once()
 
@@ -290,7 +292,7 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 			// Assumes that the password matches
 			suite.service.On("CompareHashAndPassword", mock.Anything, VALID_USER_DOMAIN.Credential.Password, []byte("HASHED_PASSWORD")).Return(true, nil).Once()
 			// Assumes set new token fails
-			suite.repo.On("SetNewUserToken", TEST_CTX, test).Return(vo.UserToken{}, fmt.Errorf("repo error")).Once()
+			suite.repo.On("SetNewUserToken", TEST_CTX, test).Return(vo.UserToken{}, ErrUnexpected).Once()
 
 			// Start login test
 			uc := NewCredentialUseCase(suite.repo, suite.service)
