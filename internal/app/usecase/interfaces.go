@@ -10,7 +10,7 @@ import (
 type ICredentialUseCase interface {
 	SignUp(ctx context.Context, user domain.User) (domain.User, error)
 	Login(ctx context.Context, cred vo.UserCredential) (domain.User, error)
-	Authorize(ctx context.Context, token string) (domain.User, error)
+	Authenticate(ctx context.Context, token string) (domain.User, error)
 	Refresh(ctx context.Context, token string) (domain.User, error)
 
 	// AdminLogin handles for admin/developer login by only the admin secret. This

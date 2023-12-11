@@ -141,7 +141,7 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	return user, nil
 }
 
-func (uc *credentialUseCase) Authorize(ctx context.Context, token string) (domain.User, error) {
+func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
 	id, err := uc.service.VerifyAndParseToken(ctx, token)
 	if err != nil {
 		return domain.User{}, NewUnauthorizedError(err)

@@ -10,7 +10,7 @@ import (
 )
 
 type AuthHeader struct {
-	Authorization string `header:"Authorization" binding:"required"`
+	BearerToken string `header:"Authorization" binding:"required"`
 }
 
 func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFunc {
@@ -20,8 +20,8 @@ func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFu
 			m.Unauthorized(c, usecase.NewUnauthorizedError(errors.New("header not found")))
 			return
 		}
-		auth.Authorization = strings.ReplaceAll(auth.Authorization, "Bearer ", "")
-		user, err := uc.Authorize(c.Request.Context(), auth.Authorization)
+		auth.BearerToken = strings.ReplaceAll(auth.BearerToken, "Bearer ", "")
+		user, err := uc.Authenticate(c.Request.Context(), auth.BearerToken)
 		if err != nil {
 			m.Unauthorized(c, err)
 			return
