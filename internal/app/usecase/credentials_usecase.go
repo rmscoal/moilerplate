@@ -222,6 +222,8 @@ func (uc *credentialUseCase) validateUserToken(ctx context.Context, user domain.
 	return nil
 }
 
+// lockDownUser locks down user by deleting the token family such that existing
+// tokens are invalidated.
 func (uc *credentialUseCase) lockDownUser(ctx context.Context, user domain.User) error {
 	if err := uc.repo.DeleteUserTokenFamily(ctx, user); err != nil {
 		return NewRepositoryError("Credentials", err)

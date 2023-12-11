@@ -8,9 +8,13 @@ import (
 )
 
 type ICredentialUseCase interface {
+	// Login handle user signin for first time user and generate pair of a jwts
 	SignUp(ctx context.Context, user domain.User) (domain.User, error)
+	// Login handle user login and generate pair of jwts
 	Login(ctx context.Context, cred vo.UserCredential) (domain.User, error)
+	// Authenticates authenticates user from the given jwt.
 	Authenticate(ctx context.Context, token string) (domain.User, error)
+	// Refresh validates refresh tokens and generates a new set of tokens.
 	Refresh(ctx context.Context, token string) (domain.User, error)
 
 	// AdminLogin handles for admin/developer login by only the admin secret. This
@@ -21,6 +25,8 @@ type ICredentialUseCase interface {
 }
 
 type IUserProfileUseCase interface {
+	// RetrieveProfile fetches the user's full profile.
 	RetrieveProfile(ctx context.Context, userID string) (domain.User, error)
+	// ModifyEmailAddress modifies user emails
 	ModifyEmailAddress(ctx context.Context, user domain.User) (domain.User, error)
 }
