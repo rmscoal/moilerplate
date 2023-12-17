@@ -108,8 +108,7 @@ func NewNotFoundError(domain string, err error) error {
 
 // NewRepositoryError returns a 500 in case the db connection died or others
 func NewRepositoryError(domain string, err error) error {
-	domain = domain + " Repository"
-	return NewError(domain, 500, ErrUnexpected, err)
+	return NewError(domain+" Repository", 500, ErrUnexpected, err)
 }
 
 /* - Domain Group Errors - */
