@@ -16,32 +16,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-/*
-Scenario:
-
-A new user registers via its,
-1. firstname,
-2. lastname,
-3. username,
-4. password,
-5. email, and
-6. phone number
-
-The creation of a new user is valid if:
-a. the firstname is not empty and is around 3 - 20 bytes long
-b. the lastname is not empty and is around 3 - 25 bytes long
-c. the username is not empty and is around 3 - 20 bytes long
-d. the email is not empty and is a valid email checked by regex
-e. the password is not empty
-f. the phone number is not empty and is a valid indonesian phone number
-
-A user gains authorization by
-1. input username and
-2. input password
-
-Once successful, an access_token and refresh_token is created
-*/
-
 var (
 	// Context for testing
 	TEST_CTX = context.Background()
@@ -329,6 +303,207 @@ func (suite *CredentialUseCaseTestSuite) TestLogin() {
 			assert.ErrorIs(suite.T(), err.(AppError).Type, ErrUnexpected)
 			assert.ErrorContains(suite.T(), err, "something unexpected had occured")
 			assert.Empty(suite.T(), user)
+		})
+	})
+}
+
+func (suite *CredentialUseCaseTestSuite) TestAuthenticate() {
+	suite.Run("Successful Authentication", func() {
+		suite.service.On("VerifyAndParseToken", TEST_CTX, "ACCESS_TOKEN").Return("UUID", nil).Once()
+
+		// Start authenticate test
+		uc := NewCredentialUseCase(suite.repo, suite.service)
+		user, err := uc.Authenticate(TEST_CTX, "ACCESS_TOKEN")
+		assert.Nil(suite.T(), err, "There should be no error")
+		if assert.NoError(suite.T(), err, "There should be no error") {
+			assert.Equal(suite.T(), domain.User{Id: "UUID"}, user)
+		}
+	})
+
+	suite.Run("Unsuccessful Authentication", func() {
+		suite.service.On("VerifyAndParseToken", TEST_CTX, "ACCESS_TOKEN_INVALID").Return("", fmt.Errorf("error on verifying token")).Once()
+
+		// Start authenticate test
+		uc := NewCredentialUseCase(suite.repo, suite.service)
+		user, err := uc.Authenticate(TEST_CTX, "ACCESS_TOKEN_INVALID")
+		assert.Error(suite.T(), err)
+		assert.ErrorContains(suite.T(), err, "unauthorized action")
+		assert.Empty(suite.T(), user)
+	})
+}
+
+func (suite *CredentialUseCaseTestSuite) TestRefresh() {
+	suite.Run("Successful Refresh", func() {
+		test_user := domain.User{
+			Id:        "UUID",
+			FirstName: "FIRST_NAME",
+			LastName:  "LAST_NAME",
+			Credential: vo.UserCredential{
+				Username: "USER_NAME",
+				Tokens:   VALID_USER_TOKENS,
+			},
+		}
+
+		suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+		suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+		suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(1, nil).Once()
+		suite.repo.On("SetNewUserToken", TEST_CTX, test_user).Return(VALID_USER_TOKENS, nil).Once()
+		suite.service.On("GenerateUserTokens", test_user).Return(VALID_USER_TOKENS, nil).Once()
+
+		// Start the refresh test
+		uc := NewCredentialUseCase(suite.repo, suite.service)
+		user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+		assert.Nil(suite.T(), err)
+		assert.Equal(suite.T(), test_user, user)
+	})
+
+	suite.Run("Unsuccesful Refresh", func() {
+		user := domain.User{
+			Id:        "UUID",
+			FirstName: "FIRST_NAME",
+			LastName:  "LAST_NAME",
+			Credential: vo.UserCredential{
+				Username: "USER_NAME",
+				Tokens:   VALID_USER_TOKENS,
+			},
+		}
+
+		suite.Run("Error parsing refresh token", func() {
+			// Assumes fail on parsing token
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("", errors.New("unable to parse token")).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+		})
+
+		suite.Run("Unable to find jti", func() {
+			// Remember this return for 4 times
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			// Assume JTI is not found
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(domain.User{}, errors.New("not found")).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+		})
+
+		suite.Run("Failed Fetching Latest Token Version", func() {
+			test_user := user
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			// Assume repo error
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(0, errors.New("error")).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "something unexpected had occured")
+		})
+
+		suite.Run("JTI Issued Previously_Part 1", func() {
+			test_user := user
+			test_user.Credential.Tokens.Issued = true
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(1, nil).Once()
+			suite.repo.On("DeleteUserTokenFamily", TEST_CTX, test_user).Return(nil).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(1, nil).Once()
+			suite.repo.On("DeleteUserTokenFamily", TEST_CTX, test_user).Return(nil).Once()
+
+			// Start refresh test
+			uc = NewCredentialUseCase(suite.repo, suite.service)
+			user, err = uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+		})
+
+		suite.Run("JTI Issued Previously_Part 2", func() {
+			test_user := user
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			// Database version number > user's verion number
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(2, nil).Once()
+			suite.repo.On("DeleteUserTokenFamily", TEST_CTX, test_user).Return(nil).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			// Database version number > user's verion number
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(2, nil).Once()
+			suite.repo.On("DeleteUserTokenFamily", TEST_CTX, test_user).Return(errors.New("")).Once()
+
+			// Start refresh test
+			uc = NewCredentialUseCase(suite.repo, suite.service)
+			user, err = uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "unauthorized action")
+		})
+
+		suite.Run("Failed Setting User Token", func() {
+			test_user := user
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(1, nil).Once()
+			suite.repo.On("SetNewUserToken", TEST_CTX, test_user).Return(vo.UserToken{}, errors.New("")).Once()
+
+			// Uncomment this if you really need to:
+			// suite.repo.AssertExpectations(suite.T())
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "something unexpected had occured")
+		})
+
+		suite.Run("Failed Generate Refresh Token", func() {
+			test_user := user
+
+			suite.service.On("VerifyAndParseRefreshToken", TEST_CTX, "REFRESH_TOKEN").Return("SOME_JTI", nil).Once()
+			suite.repo.On("GetUserByJti", TEST_CTX, "SOME_JTI").Return(test_user, nil).Once()
+			suite.repo.On("GetLatestUserTokenVersion", TEST_CTX, test_user).Return(1, nil).Once()
+			suite.repo.On("SetNewUserToken", TEST_CTX, test_user).Return(VALID_USER_TOKENS, nil).Once()
+			suite.service.On("GenerateUserTokens", test_user).Return(vo.UserToken{}, errors.New("")).Once()
+			suite.repo.On("UndoSetUserToken", TEST_CTX, "TOKEN_ID").Return(nil).Once()
+
+			// Start refresh test
+			uc := NewCredentialUseCase(suite.repo, suite.service)
+			user, err := uc.Refresh(TEST_CTX, "REFRESH_TOKEN")
+			assert.Empty(suite.T(), user)
+			assert.Error(suite.T(), err)
+			assert.ErrorContains(suite.T(), err, "something unexpected had occured")
 		})
 	})
 }

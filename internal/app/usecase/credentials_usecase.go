@@ -92,7 +92,7 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 
 	user, err = uc.repo.CreateNewUser(ctx, user)
 	if err != nil {
-		return user, NewRepositoryError("User", err)
+		return user, NewConflictError("User", err)
 	}
 
 	user, err = uc.prepareUserTokensGeneration(ctx, user)
