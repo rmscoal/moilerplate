@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rmscoal/moilerplate/internal/adapter/repo/mapper"
 	"github.com/rmscoal/moilerplate/internal/adapter/repo/model"
@@ -24,14 +25,14 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 		Delete(&model.UserEmail{}, "user_id = ?", user.Id).
 		Error; err != nil {
 		tx.Rollback()
-		return user, repo.TranslateError(err)
+		return user, fmt.Errorf("unable to delete all user emails")
 	}
 
 	if err := tx.Model(&userModel).
 		Select("UserEmails").
 		Save(&userModel).Error; err != nil {
 		tx.Rollback()
-		return user, repo.TranslateError(err)
+		return user, repo.DetectConstraintError(err)
 	}
 	tx.Commit()
 	return mapper.MapUserModelToDomain(userModel), nil
@@ -45,7 +46,7 @@ func (repo *userProfileRepo) GetUserProfile(ctx context.Context, id string) (dom
 		Preload("UserCredential").
 		First(&userModel, "id = ?", id).
 		Error; err != nil {
-		return domain.User{}, repo.TranslateError(err)
+		return domain.User{}, repo.DetectNotFoundError(err)
 	}
 
 	return mapper.MapUserModelToDomain(userModel), nil

@@ -26,7 +26,7 @@ func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User)
 		WithContext(ctx).
 		Model(&model).
 		Create(&model).Error; err != nil {
-		return user, repo.TranslateError(err)
+		return user, repo.DetectConstraintError(err)
 	}
 	user = mapper.MapUserModelToDomain(model)
 	return user, nil
@@ -41,7 +41,7 @@ func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username stri
 		InnerJoins("UserCredential", repo.db.Where(&model.UserCredential{Username: username})).
 		First(&userModel).
 		Error; err != nil {
-		return domain.User{}, repo.TranslateError(err)
+		return domain.User{}, repo.DetectNotFoundError(err)
 	}
 
 	return mapper.MapUserModelToDomain(userModel), nil
@@ -54,7 +54,7 @@ func (repo *credentialRepo) GetUserByJti(ctx context.Context, jti string) (domai
 		Preload("User").
 		Preload("User.UserCredential").
 		First(&authCred, "id = ?", jti).Error; err != nil {
-		return domain.User{}, fmt.Errorf("unable to get user from jti: %s", err)
+		return domain.User{}, repo.DetectNotFoundError(err)
 	}
 
 	return mapper.MapAuthCredModelToUserDomain(authCred), nil
@@ -68,7 +68,7 @@ func (repo *credentialRepo) SetNewUserToken(ctx context.Context, user domain.Use
 	}
 
 	if err := repo.db.WithContext(ctx).Create(&authCred).Error; err != nil {
-		return vo.UserToken{}, fmt.Errorf("unable to set a new user token: %s", err)
+		return vo.UserToken{}, repo.DetectConstraintError(err)
 	}
 
 	return mapper.MapAuthCredToUserTokenVO(authCred), nil
@@ -124,7 +124,7 @@ func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user dom
 		Update("password", user.Credential.Password).
 		Error; err != nil {
 		tx.Rollback()
-		return repo.TranslateError(err)
+		return fmt.Errorf("unable to save user's new hashed password")
 	}
 
 	tx.Commit()

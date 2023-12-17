@@ -15,6 +15,7 @@ type SQLSTATE string
 const (
 	DuplicateError  SQLSTATE = "23505"
 	ForeignKeyError SQLSTATE = "23503"
+	// TODO: Add more states
 )
 
 func (s SQLSTATE) String() string {
@@ -109,7 +110,7 @@ func (repo *baseRepo) registerForeignKeys() error {
 	return nil
 }
 
-func (repo *baseRepo) TranslateError(err error) error {
+func (repo *baseRepo) DetectConstraintError(err error) error {
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		switch SQLSTATE(pgErr.Code) {
 		case DuplicateError:
@@ -119,9 +120,12 @@ func (repo *baseRepo) TranslateError(err error) error {
 		}
 	}
 
+	return usecase.ErrUnexpected
+}
+
+func (repo *baseRepo) DetectNotFoundError(err error) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return usecase.ErrNotFound
 	}
-
 	return usecase.ErrUnexpected
 }

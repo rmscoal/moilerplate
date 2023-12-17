@@ -14,6 +14,7 @@ var (
 	ErrNotFound            = errors.New("record not found")
 	ErrConflictState       = errors.New("conflict state")
 	ErrUnauthorized        = errors.New("unauthorized action")
+	ErrForbidden           = errors.New("forbidden")
 )
 
 var ErrNameMapper = map[error]string{
@@ -25,6 +26,7 @@ var ErrNameMapper = map[error]string{
 	ErrNotFound:            "NotFoundError",
 	ErrConflictState:       "ConflictDuplicationError",
 	ErrUnauthorized:        "UnauthorizedError",
+	ErrForbidden:           "ForbiddenError",
 }
 
 type AppError struct {
@@ -80,32 +82,40 @@ func NewErrorWithReport(domain string, code int, errType, err error, report stri
 	return nErr
 }
 
+/* - Repository Group Errors - */
+
+// NewConflictError return either 409 for any conflict state on the database
+// like unique index and so on or 500 in case the db connection died or others
 func NewConflictError(domain string, err error) error {
-	return NewError(domain, 409, ErrConflictState, err)
-}
-
-func NewDomainError(domain string, err error) error {
-	return NewError(domain, 422, ErrUnprocessableEntity, err)
-}
-
-func NewRepositoryError(domain string, err error) error {
-	domain = domain + " Repository"
 	switch {
 	case errors.Is(err, ErrUnexpected):
-		return NewError(domain, 500, ErrUnexpected, err)
-	case errors.Is(err, ErrNotFound):
-		return NewNotFoundError(domain, err)
+		return NewRepositoryError(domain, err)
 	default:
-		return NewConflictError(domain, err)
+		return NewError(domain+" Repository", 409, ErrConflictState, err)
 	}
 }
 
-func NewServiceError(domain string, err error) error {
-	return NewError(domain+" Service", 500, ErrUnexpected, err)
+// NewNotFoundError return either 404 for resources that are not found in the
+// database or 500 in case the db connection died or others
+func NewNotFoundError(domain string, err error) error {
+	switch {
+	case errors.Is(err, ErrUnexpected):
+		return NewRepositoryError(domain, err)
+	default:
+		return NewError(domain+" Repository", 404, ErrNotFound, err)
+	}
 }
 
-func NewNotFoundError(domain string, err error) error {
-	return NewError(domain, 404, ErrNotFound, err)
+// NewRepositoryError returns a 500 in case the db connection died or others
+func NewRepositoryError(domain string, err error) error {
+	domain = domain + " Repository"
+	return NewError(domain, 500, ErrUnexpected, err)
+}
+
+/* - Domain Group Errors - */
+
+func NewDomainError(domain string, err error) error {
+	return NewError(domain, 422, ErrUnprocessableEntity, err)
 }
 
 func NewUnauthorizedError(err error) error {
@@ -116,4 +126,11 @@ func NewUnauthorizedErrorWithReport(err error) error {
 	return NewErrorWithReport("", 401, ErrUnauthorized, err,
 		`This might be due to a stolen token or malformed jti. Please go to www.moilorplate.com/change-password to secure your account`,
 	)
+}
+
+/* - Service Group Errors - */
+
+// NewServiceError returns 500 when a service/third party fails
+func NewServiceError(domain string, err error) error {
+	return NewError(domain+" Service", 500, ErrUnexpected, err)
 }
