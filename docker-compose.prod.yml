@@ -2,8 +2,8 @@ version: "3.0"
 services:
   moilerplate:
     build:
-      context: ..
-      dockerfile: docker/http.prod.dockerfile
+      context: .
+      dockerfile: Dockerfile.prod
     container_name: moilerplate-app
     image: moilerplate-app
     restart: always
@@ -49,8 +49,6 @@ services:
       - 8082:8082
     networks:
       - moilerplate-networks
-    volumes:
-      - ./:/app
     depends_on:
       - pg
 
@@ -121,8 +119,42 @@ services:
     networks:
       - moilerplate-networks
 
+  # If we want to enable netdata, uncomment these lines:
+  # netdata:
+  #   image: netdata/netdata:stable
+  #   container_name: netdata
+  #   pid: host
+  #   network_mode: host
+  #   restart: unless-stopped
+  #   cap_add:
+  #     - SYS_PTRACE
+  #     - SYS_ADMIN
+  #   security_opt:
+  #     - apparmor:unconfined
+  #   volumes:
+  #     - moilerplate-netdataconfig:/etc/netdata
+  #     - moilerplate-netdatalib:/var/lib/netdata
+  #     - moilerplate-netdatacache:/var/cache/netdata
+  #     - /etc/passwd:/host/etc/passwd:ro
+  #     - /etc/group:/host/etc/group:ro
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - /proc:/host/proc:ro
+  #     - /sys:/host/sys:ro
+  #     - /etc/os-release:/host/etc/os-release:ro
+  #     - /var/log:/host/var/log:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #   environment:
+  #     # For the environments of netdata, check your netdata console.
+  #     - NETDATA_CLAIM_TOKEN=<FILL_IN>
+  #     - NETDATA_CLAIM_URL=https://app.netdata.cloud
+  #     - NETDATA_CLAIM_ROOMS=<FILL_IN>
+
 volumes:
   moilerplate-pg-data:
   moilerplate-grafana-data:
+  # If we want to enable netdata, uncomment these lines:
+  # moilerplate-netdataconfig:
+  # moilerplate-netdatalib:
+  # moilerplate-netdatacache:
 networks:
   moilerplate-networks:

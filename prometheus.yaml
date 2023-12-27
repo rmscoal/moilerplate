@@ -1,0 +1,8 @@
+global:
+  evaluation_interval: 30s
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: 'collector'
+    static_configs:
+      # Collects from the otel exporter for Prometheus
+      - targets: ['otel_collector:9464']

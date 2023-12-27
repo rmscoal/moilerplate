@@ -1,10 +1,13 @@
+# 
+# Development (localhost) docker compose file
+# 
 version: "3.0"
 services:
   moilerplate:
     build:
-      context: ..
-      dockerfile: docker/dev.dockerfile
-    container_name: moilerplate-app
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: moilerplate_app
     image: moilerplate-app
     restart: always
     environment:
@@ -50,7 +53,7 @@ services:
     networks:
       - moilerplate-networks
     volumes:
-      - ./:/docker/app
+      - ./:/app # Include the content of root dir for hot reload
     depends_on:
       - pg
       - otel_collector

@@ -1,0 +1,39 @@
+# For more information, refer to: https://www.jaegertracing.io/docs/1.40/getting-started/
+
+# (1) Receivers
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: otel_collector:4318 # It is important that we do not use localhost
+
+# (2) Processors
+processors:
+  memory_limiter:
+    limit_percentage: 50
+    check_interval: 1s
+    spike_limit_percentage: 30
+  batch:
+    send_batch_size: 8192
+
+# (3) Exporters
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: otel_collector:9464
+
+# (4) Service
+service:
+  # A pipeline consists of a set of receivers, processors and exporters.
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [jaeger]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
