@@ -30,7 +30,7 @@ func NewMiddleware() *Middleware {
 	if middlewareSingleton == nil {
 		once.Do(func() {
 			middlewareSingleton = &Middleware{
-				tracer: otel.Tracer("http-endpoint"),
+				tracer: otel.Tracer("http.server"),
 			}
 		})
 	}

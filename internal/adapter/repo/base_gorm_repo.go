@@ -7,6 +7,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/rmscoal/moilerplate/internal/app/usecase"
 	"gorm.io/gorm"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // SQLSTATE is the error code
@@ -28,6 +31,7 @@ func (s SQLSTATE) String() string {
 type baseRepo struct {
 	db          *gorm.DB
 	constraints map[string]string
+	tracer      trace.Tracer
 }
 
 var gormRepo *baseRepo
@@ -36,6 +40,7 @@ func InitBaseRepo(db *gorm.DB) error {
 	gormRepo = &baseRepo{
 		db:          db,
 		constraints: make(map[string]string, 0),
+		tracer:      otel.Tracer("gorm_repo_tracer"),
 	}
 
 	if err := gormRepo.registerIndexes(); err != nil {
