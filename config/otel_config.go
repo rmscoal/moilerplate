@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/go-ozzo/ozzo-validation/is"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -35,12 +37,27 @@ func (c *Config) newOtelConfig() {
 
 func (o otelConfig) validate() error {
 	return validation.ValidateStruct(&o,
-		validation.Field(&o.traceEndpoint, validation.Required, is.RequestURL),
-		validation.Field(&o.metricEndpoint, validation.Required, is.RequestURL),
+		validation.Field(&o.traceEndpoint, validation.Required, validation.By(o.validateEndpoint)),
+		validation.Field(&o.metricEndpoint, validation.Required, validation.By(o.validateEndpoint)),
 		validation.Field(&o.serviceName, validation.Required, validation.Length(3, 0)),
 		validation.Field(&o.serviceVersion, validation.Required, is.Semver),
 		validation.Field(&o.serviceInstanceID, validation.Required, validation.Length(3, 0)),
 	)
+}
+
+func (o otelConfig) validateEndpoint(_ any) error {
+	arr := strings.Split(o.traceEndpoint, ":")
+	if len(arr) != 2 {
+		return fmt.Errorf("invalid endpoint")
+	}
+	if err := validation.Validate(arr[1], validation.Required, is.Port); err != nil {
+		return fmt.Errorf("invalid port endpoint: %s", err)
+	}
+	if err := validation.Validate(arr[0], validation.Required); err != nil {
+		return fmt.Errorf("invalid host endpoint: %s", err)
+	}
+
+	return nil
 }
 
 func (o otelConfig) GetTraceEndpoint() string {
