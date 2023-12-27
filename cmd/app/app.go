@@ -15,6 +15,7 @@ import (
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	httpserver "github.com/rmscoal/moilerplate/pkg/http"
 	"github.com/rmscoal/moilerplate/pkg/logger"
+	"github.com/rmscoal/moilerplate/pkg/observability"
 	"github.com/rmscoal/moilerplate/pkg/postgres"
 	"github.com/rmscoal/moilerplate/pkg/rater"
 )
@@ -110,6 +111,15 @@ func (a *app) Run(args []string) int {
 		rater.RegisterBurstLimitForEachClient(cfg.App.BurstLimit()),
 		rater.RegisterEvaluationInterval(cfg.App.RaterEvaluationInterval()),
 		rater.RegisterDeletionTime(cfg.App.RaterDeletionTime()),
+	)
+
+	// Opentelemetry
+	observability.Init(context.Background(),
+		observability.TraceEndpoint(cfg.Otel.GetTraceEndpoint()),
+		observability.MetricsEndpoint(cfg.Otel.GetMetricEndpoint()),
+		observability.ServiceName(cfg.Otel.GetServiceName()),
+		observability.ServiceVersion(cfg.Otel.GetServiceVersion()),
+		observability.ServiceInstanceID(cfg.Otel.GetServiceInstanceID()),
 	)
 
 	// Composers .-.
