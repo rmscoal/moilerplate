@@ -5,6 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/moilerplate/internal/delivery/v1/model"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Middleware struct server as the parent class of all
@@ -12,6 +15,8 @@ import (
 // inherited methods of a GiinBaseController.
 type Middleware struct {
 	model.BaseControllerV1
+	tracer  trace.Tracer
+	metrics metric.Meter
 }
 
 var (
@@ -26,7 +31,10 @@ var (
 func NewMiddleware() *Middleware {
 	if middlewareSingleton == nil {
 		once.Do(func() {
-			middlewareSingleton = &Middleware{}
+			middlewareSingleton = &Middleware{
+				tracer:  otel.Tracer("otel_middleware"),
+				metrics: otel.Meter("otel_middleware"),
+			}
 		})
 	}
 	return middlewareSingleton

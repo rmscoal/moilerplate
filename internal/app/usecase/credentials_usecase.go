@@ -12,15 +12,19 @@ import (
 	"github.com/rmscoal/moilerplate/internal/domain"
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
 	"github.com/rmscoal/moilerplate/internal/utils"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type credentialUseCase struct {
 	repo    repo.ICredentialRepo
 	service service.IDoorkeeperService
+	tracer  trace.Tracer
 }
 
 func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeperService) ICredentialUseCase {
-	return &credentialUseCase{repo: repo, service: service}
+	return &credentialUseCase{repo: repo, service: service, tracer: otel.Tracer("credential_usecase")}
 }
 
 /*
@@ -104,6 +108,9 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 }
 
 func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Login")
+	defer span.End()
+
 	var user domain.User
 
 	// Validate request
@@ -128,6 +135,8 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	defer cancel()
 	success, err := uc.service.CompareHashAndPassword(ctxWithTimeout, cred.Password, mixture)
 	if err != nil || !success {
+		span.SetStatus(codes.Error, "error")
+		span.RecordError(err)
 		return user, NewUnauthorizedError(utils.AddError(fmt.Errorf("the password does not match"), err))
 	}
 
@@ -136,8 +145,9 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 		return user, err
 	}
 
-	go uc.generateNewHashMixture(user.Id, cred.Password)
+	go uc.generateNewHashMixture(trace.ContextWithSpan(context.Background(), span), user.Id, cred.Password)
 
+	span.AddEvent("login finished processing")
 	return user, nil
 }
 
@@ -186,8 +196,13 @@ func (uc *credentialUseCase) Refresh(ctx context.Context, refreshToken string) (
 }
 
 func (uc *credentialUseCase) prepareUserTokensGeneration(ctx context.Context, user domain.User) (domain.User, error) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).prepareUserTokensGeneration")
+	defer span.End()
+
 	token, err := uc.repo.SetNewUserToken(ctx, user)
 	if err != nil {
+		span.SetStatus(codes.Error, "error")
+		span.RecordError(err, trace.WithStackTrace(true))
 		return domain.User{}, NewRepositoryError("Credentials", err)
 	}
 
@@ -197,6 +212,8 @@ func (uc *credentialUseCase) prepareUserTokensGeneration(ctx context.Context, us
 		if rErr := uc.repo.UndoSetUserToken(ctx, user.Credential.Tokens.TokenID); rErr != nil {
 			err = utils.AddError(err, rErr)
 		}
+		span.SetStatus(codes.Error, "error")
+		span.RecordError(err, trace.WithStackTrace(true))
 		return domain.User{}, NewServiceError("Credentials", err)
 	}
 
@@ -234,7 +251,11 @@ func (uc *credentialUseCase) lockDownUser(ctx context.Context, user domain.User)
 // generateNewHashMixture method creates a new hash
 // mixture from user's password. Set this up with
 // goroutine after signin in.
-func (uc *credentialUseCase) generateNewHashMixture(id, password string) {
+func (uc *credentialUseCase) generateNewHashMixture(ctx context.Context, id, password string) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).generateNewHashMixture")
+	defer span.End()
+	span.AddEvent("generating hash mixture asynchronously")
+
 	user := domain.User{Id: id, Credential: vo.UserCredential{Password: password}}
 
 	mixture, err := uc.service.HashPassword(user.Credential.Password)
@@ -243,9 +264,12 @@ func (uc *credentialUseCase) generateNewHashMixture(id, password string) {
 	}
 	user.Credential.SetEncodedPasswordFromByte(mixture)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
+
 	if err := uc.repo.RotateUserHashPassword(ctx, user); err != nil {
+		span.SetStatus(codes.Error, "error generate new hash mixture")
+		span.RecordError(err, trace.WithStackTrace(true))
 		log.Printf("failed to save user hash rotation for user id: %s", id)
 	}
 }

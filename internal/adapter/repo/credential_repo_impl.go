@@ -33,6 +33,9 @@ func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User)
 }
 
 func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).GetUserByUsername")
+	defer span.End()
+
 	var userModel model.User
 
 	if err := repo.db.
@@ -61,6 +64,9 @@ func (repo *credentialRepo) GetUserByJti(ctx context.Context, jti string) (domai
 }
 
 func (repo *credentialRepo) SetNewUserToken(ctx context.Context, user domain.User) (vo.UserToken, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).SetNewUserToken")
+	defer span.End()
+
 	authCred := mapper.MapUserDomainToNewAuthCredModel(user)
 
 	if err := repo.IssueParentToken(ctx, authCred); err != nil {
@@ -76,6 +82,9 @@ func (repo *credentialRepo) SetNewUserToken(ctx context.Context, user domain.Use
 
 func (repo *credentialRepo) IssueParentToken(ctx context.Context, authCred model.AuthorizationCredential) error {
 	if authCred.ParentId != nil {
+		ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).IssueParentToken")
+		defer span.End()
+
 		if err := repo.db.WithContext(ctx).
 			Model(&model.AuthorizationCredential{}).
 			Where("id = ?", authCred.ParentId).
@@ -117,6 +126,9 @@ func (repo *credentialRepo) DeleteUserTokenFamily(ctx context.Context, user doma
 }
 
 func (repo *credentialRepo) RotateUserHashPassword(ctx context.Context, user domain.User) error {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).RotateUserHashPassword")
+	defer span.End()
+
 	tx := repo.db.WithContext(ctx).Begin()
 
 	if err := tx.Model(&model.UserCredential{}).

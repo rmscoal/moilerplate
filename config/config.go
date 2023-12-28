@@ -12,6 +12,7 @@ type Config struct {
 	Db         dbConfig
 	App        appConfig
 	Doorkeeper doorkeeperConfig
+	Otel       otelConfig
 }
 
 var (
@@ -44,6 +45,7 @@ func (c *Config) load() {
 	c.newDbConfig()
 	c.newAppConfig()
 	c.newDoorkeeperConfig()
+	c.newOtelConfig()
 }
 
 // printInfo function    prints the entire configuration info

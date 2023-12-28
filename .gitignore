@@ -1,6 +1,8 @@
 # Environments
-*.yaml
 *.env
+
+# Swagger
+swagger.yaml
 
 # Workspace configuration
 .vscode
@@ -22,4 +24,4 @@ server.crt
 server.key
 
 # Dockerfiles - with creds
-docker/priv.docker-compose.yml
+priv.docker-compose.yml

@@ -20,6 +20,8 @@ import (
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
 	"github.com/rmscoal/moilerplate/internal/utils"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -32,11 +34,12 @@ var (
 var ErrPasswordMismatch = errors.New("timeout exceeded due to password mismatch")
 
 type doorkeeperService struct {
-	dk *doorkeeper.Doorkeeper
+	dk     *doorkeeper.Doorkeeper
+	tracer trace.Tracer
 }
 
 func NewDoorkeeperService(dk *doorkeeper.Doorkeeper) *doorkeeperService {
-	return &doorkeeperService{dk}
+	return &doorkeeperService{dk: dk, tracer: otel.Tracer("doorkeeper-service")}
 }
 
 /*
@@ -111,6 +114,9 @@ func (s *doorkeeperService) HashPassword(pass string) ([]byte, error) {
 }
 
 func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password string, hash []byte) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "(*doorkeeperService).CompareHashAndPassword")
+	defer span.End()
+
 	reportChannel := make(chan bool)
 
 	for i := MinSaltLength; i <= MaxSaltLength; i++ {

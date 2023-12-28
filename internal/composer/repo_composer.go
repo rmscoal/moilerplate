@@ -7,6 +7,7 @@ import (
 	"github.com/rmscoal/moilerplate/internal/adapter/repo/model"
 	"github.com/rmscoal/moilerplate/internal/app/repo"
 	"github.com/rmscoal/moilerplate/pkg/postgres"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type IRepoComposer interface {
@@ -24,6 +25,8 @@ func NewRepoComposer(db *postgres.Postgres) IRepoComposer {
 	comp.db = db
 
 	comp.Migrate()
+	// Use tracing after migrating
+	comp.db.ORM.Use(tracing.NewPlugin(tracing.WithoutQueryVariables(), tracing.WithoutMetrics()))
 
 	return comp
 }
