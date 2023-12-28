@@ -116,7 +116,7 @@ func (ob observability) newMeterProvider(ctx context.Context, resource *resource
 	mp := sdkmetric.NewMeterProvider(
 		sdkmetric.WithResource(resource),
 		sdkmetric.WithReader(
-			sdkmetric.NewPeriodicReader(metricsExporter, sdkmetric.WithInterval(15*time.Second)),
+			sdkmetric.NewPeriodicReader(metricsExporter, sdkmetric.WithInterval(5*time.Second)),
 		),
 	)
 	otel.SetMeterProvider(mp)
