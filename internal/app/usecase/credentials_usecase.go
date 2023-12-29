@@ -37,6 +37,9 @@ like the swagger documentation.
 */
 
 func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (vo.AdminSession, error) {
+	_, span := uc.tracer.Start(ctx, "(*credentialUseCase).AdminLogin")
+	defer span.End()
+
 	adminSession := vo.AdminSession{
 		// Set the expiry session to 1 hour
 		Expiry: time.Now().Add(1 * time.Hour),
@@ -57,6 +60,9 @@ func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (v
 }
 
 func (uc *credentialUseCase) AuthenticateAdmin(ctx context.Context, session string) error {
+	_, span := uc.tracer.Start(ctx, "(*credentialUseCase).AdminLogin")
+	defer span.End()
+
 	payload, err := uc.service.ParseSession(session)
 	if err != nil {
 		return NewUnauthorizedError(err)
@@ -83,6 +89,9 @@ Description: Holds logic for the general usecase of users of the application
 */
 
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).SignUp")
+	defer span.End()
+
 	// Validate user entity
 	if err := user.Validate(); err != nil {
 		return user, NewDomainError("User", err)
@@ -90,6 +99,8 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 
 	mixture, err := uc.service.HashPassword(user.Credential.Password)
 	if err != nil {
+		span.SetStatus(codes.Error, "error while hashing password")
+		span.RecordError(err)
 		return user, NewServiceError("User", err)
 	}
 	user.Credential.SetEncodedPasswordFromByte(mixture)
@@ -115,6 +126,8 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 
 	// Validate request
 	if err := cred.Validate(); err != nil {
+		span.SetStatus(codes.Error, "error domain validation")
+		span.RecordError(err)
 		return user, NewDomainError("Credentials", err)
 	}
 
@@ -127,6 +140,8 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	// Decode user's mixture
 	mixture, err := user.Credential.GetHashMixture()
 	if err != nil {
+		span.SetStatus(codes.Error, "error getting hash mixture")
+		span.RecordError(err)
 		return user, NewDomainError("Credentials", utils.AddError(fmt.Errorf("unable to retrieve user's hash"), err))
 	}
 
@@ -135,7 +150,6 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 	defer cancel()
 	success, err := uc.service.CompareHashAndPassword(ctxWithTimeout, cred.Password, mixture)
 	if err != nil || !success {
-		span.SetStatus(codes.Error, "error")
 		span.RecordError(err)
 		return user, NewUnauthorizedError(utils.AddError(fmt.Errorf("the password does not match"), err))
 	}
@@ -152,6 +166,9 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 }
 
 func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Authenticate")
+	defer span.End()
+
 	id, err := uc.service.VerifyAndParseToken(ctx, token)
 	if err != nil {
 		return domain.User{}, NewUnauthorizedError(err)
@@ -173,6 +190,9 @@ func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (do
 // 5. Generate the tokens
 // See: https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/
 func (uc *credentialUseCase) Refresh(ctx context.Context, refreshToken string) (domain.User, error) {
+	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Refresh")
+	defer span.End()
+
 	jti, err := uc.service.VerifyAndParseRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return domain.User{}, NewUnauthorizedError(err)

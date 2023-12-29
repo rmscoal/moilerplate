@@ -21,6 +21,7 @@ import (
 	"github.com/rmscoal/moilerplate/internal/utils"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -125,6 +126,7 @@ func (s *doorkeeperService) CompareHashAndPassword(ctx context.Context, password
 
 	select {
 	case <-ctx.Done():
+		span.SetStatus(codes.Error, "error context cancelled/done")
 		return false, ErrPasswordMismatch
 	case <-reportChannel:
 		return true, nil
@@ -230,12 +232,19 @@ func (s *doorkeeperService) GenerateRefreshToken(user domain.User) (rt string, e
 }
 
 func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "(*doorkeeperService).VerifyAndParseToken")
+	span.End()
+
 	claims, err := s.verifyAndGetClaims(tk)
 	if err != nil {
+		span.SetStatus(codes.Error, "error verifying claims")
+		span.RecordError(err)
 		return "", err
 	}
 
 	if err := s.verifyClaims(ctx, claims, "sub"); err != nil {
+		span.SetStatus(codes.Error, "error verifying claims")
+		span.RecordError(err)
 		return "", err
 	}
 
@@ -243,12 +252,19 @@ func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) 
 }
 
 func (s *doorkeeperService) VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "(*doorkeeperService).VerifyAndParseRefreshToken")
+	span.End()
+
 	claims, err := s.verifyAndGetClaims(tk)
 	if err != nil {
+		span.SetStatus(codes.Error, "error verifying claims")
+		span.RecordError(err)
 		return "", err
 	}
 
 	if err := s.verifyClaims(ctx, claims, "jti"); err != nil {
+		span.SetStatus(codes.Error, "error verifying claims")
+		span.RecordError(err)
 		return "", err
 	}
 

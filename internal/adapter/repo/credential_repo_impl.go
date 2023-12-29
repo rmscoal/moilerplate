@@ -20,6 +20,9 @@ func NewCredentialRepo() *credentialRepo {
 }
 
 func (repo *credentialRepo) CreateNewUser(ctx context.Context, user domain.User) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).CreateNewUser")
+	defer span.End()
+
 	model := mapper.MapUserDomainToPersistence(user)
 	if err := repo.db.
 		Session(&gorm.Session{FullSaveAssociations: true}).
@@ -51,6 +54,9 @@ func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username stri
 }
 
 func (repo *credentialRepo) GetUserByJti(ctx context.Context, jti string) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).GetUserByJti")
+	defer span.End()
+
 	var authCred model.AuthorizationCredential
 
 	if err := repo.db.WithContext(ctx).
@@ -97,6 +103,9 @@ func (repo *credentialRepo) IssueParentToken(ctx context.Context, authCred model
 }
 
 func (repo *credentialRepo) UndoSetUserToken(ctx context.Context, jti string) error {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).UndoSetUserToken")
+	defer span.End()
+
 	if err := repo.db.WithContext(ctx).Delete(&model.AuthorizationCredential{}, "id = ?", jti).Error; err != nil {
 		return fmt.Errorf("unable to undo creation of user token: %s", err)
 	}
@@ -104,6 +113,9 @@ func (repo *credentialRepo) UndoSetUserToken(ctx context.Context, jti string) er
 }
 
 func (repo *credentialRepo) GetLatestUserTokenVersion(ctx context.Context, user domain.User) (int, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).GetLatestUserTokenVersion")
+	defer span.End()
+
 	var count int64
 	if err := repo.db.WithContext(ctx).
 		Model(&model.AuthorizationCredential{}).
@@ -116,6 +128,9 @@ func (repo *credentialRepo) GetLatestUserTokenVersion(ctx context.Context, user 
 }
 
 func (repo *credentialRepo) DeleteUserTokenFamily(ctx context.Context, user domain.User) error {
+	ctx, span := repo.tracer.Start(ctx, "(*credentialRepo).DeleteUserTokenFamily")
+	defer span.End()
+
 	if err := repo.db.WithContext(ctx).
 		Delete(&model.AuthorizationCredential{}, "user_id = ?", user.Id).
 		Error; err != nil {
