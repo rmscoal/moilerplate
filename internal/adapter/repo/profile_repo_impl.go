@@ -18,6 +18,9 @@ func NewUserProfileRepo() *userProfileRepo {
 }
 
 func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.User) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*userProfileRepo).SaveUserEmails")
+	defer span.End()
+
 	userModel := mapper.MapUserDomainToPersistence(user)
 	tx := repo.db.WithContext(ctx).Begin()
 
@@ -39,6 +42,9 @@ func (repo *userProfileRepo) SaveUserEmails(ctx context.Context, user domain.Use
 }
 
 func (repo *userProfileRepo) GetUserProfile(ctx context.Context, id string) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "(*userProfileRepo).GetUserProfile")
+	defer span.End()
+
 	var userModel model.User
 	if err := repo.db.WithContext(ctx).
 		Model(&userModel).
