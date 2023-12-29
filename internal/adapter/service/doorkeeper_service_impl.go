@@ -232,19 +232,12 @@ func (s *doorkeeperService) GenerateRefreshToken(user domain.User) (rt string, e
 }
 
 func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) (string, error) {
-	ctx, span := s.tracer.Start(ctx, "(*doorkeeperService).VerifyAndParseToken")
-	span.End()
-
 	claims, err := s.verifyAndGetClaims(tk)
 	if err != nil {
-		span.SetStatus(codes.Error, "error verifying claims")
-		span.RecordError(err)
 		return "", err
 	}
 
 	if err := s.verifyClaims(ctx, claims, "sub"); err != nil {
-		span.SetStatus(codes.Error, "error verifying claims")
-		span.RecordError(err)
 		return "", err
 	}
 
@@ -252,19 +245,12 @@ func (s *doorkeeperService) VerifyAndParseToken(ctx context.Context, tk string) 
 }
 
 func (s *doorkeeperService) VerifyAndParseRefreshToken(ctx context.Context, tk string) (string, error) {
-	ctx, span := s.tracer.Start(ctx, "(*doorkeeperService).VerifyAndParseRefreshToken")
-	span.End()
-
 	claims, err := s.verifyAndGetClaims(tk)
 	if err != nil {
-		span.SetStatus(codes.Error, "error verifying claims")
-		span.RecordError(err)
 		return "", err
 	}
 
 	if err := s.verifyClaims(ctx, claims, "jti"); err != nil {
-		span.SetStatus(codes.Error, "error verifying claims")
-		span.RecordError(err)
 		return "", err
 	}
 
