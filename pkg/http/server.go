@@ -69,7 +69,7 @@ func (s *Server) implementSecure() {
 	}
 
 	tlsConfig := new(tls.Config)
-	tlsConfig.NextProtos = []string{"http/1.1", "http/2"}
+	tlsConfig.NextProtos = []string{"http/2"} // Only make http/2 by default
 	tlsConfig.MinVersion = tls.VersionTLS12
 
 	tlsConfig.Certificates = []tls.Certificate{

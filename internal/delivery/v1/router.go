@@ -14,14 +14,12 @@ import (
 var web embed.FS
 
 func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer) {
-	// TODO: r.UseH2C = true
 	r.Use(middleware.NewMiddleware().MetricsMiddleware())
 	r.Use(middleware.NewMiddleware().TraceMiddleware())
+	r.Use(middleware.LogRequestMiddleware(logger))
 
 	// Load all web html templates
 	htmls := template.Must(template.ParseFS(web, "web/**/*.html"))
-
-	r.Use(middleware.LogRequestMiddleware(logger))
 	r.SetHTMLTemplate(htmls)
 
 	// API V1 - Parent of all endpoint for V1.

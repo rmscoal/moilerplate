@@ -65,9 +65,11 @@ go run . server --help
                 --env-path        provide with the dot env file path
 ```
 #### Running the server
-You may run the server via the cli or using docker. I have provided docker examples for you to play with.
+You may run the server with or without docker. I have provided docker examples for you to play with.
 
-If you want to start locally, I recommend installing [air](https://github.com/cosmtrek/air) for hot reload as I've provided the `.air.toml` too. I have also provided two docker compose files, one for development (capable of hot reload) and for "production". Personally I recommend starting it using docker compose as it have other components that are integrated too.
+If you want to start without docker, I recommend installing [air](https://github.com/cosmtrek/air) for hot reload as I've provided the `.air.toml` too. I have also provided two docker compose files, one for development (capable of hot reload) and for "production". Personally I recommend starting it using docker compose as it have other components that are integrated too.
+
+Just in case, if you want to enable HTTP/2 for your server, consider using the `--with-secure` option and providing necessary certificates.
 
 
 ## What's already included in Moilerplate?

@@ -21,7 +21,7 @@ ENTRYPOINT ["/src/moilerplate-app", "server", "--mode=PRODUCTION"]
 
 # If you want https enabled uncomment these lines:
 # 
-# COPY --from=builder /app/server.cert /src/server.cert
+# COPY --from=builder /app/server.crt /src/server.crt
 # COPY --from=builder /app/server.key /src/server.key
 # 
 # Use this entrypoint instead:
