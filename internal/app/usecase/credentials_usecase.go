@@ -37,9 +37,6 @@ like the swagger documentation.
 */
 
 func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (vo.AdminSession, error) {
-	_, span := uc.tracer.Start(ctx, "(*credentialUseCase).AdminLogin")
-	defer span.End()
-
 	adminSession := vo.AdminSession{
 		// Set the expiry session to 1 hour
 		Expiry: time.Now().Add(1 * time.Hour),
@@ -60,9 +57,6 @@ func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (v
 }
 
 func (uc *credentialUseCase) AuthenticateAdmin(ctx context.Context, session string) error {
-	_, span := uc.tracer.Start(ctx, "(*credentialUseCase).AdminLogin")
-	defer span.End()
-
 	payload, err := uc.service.ParseSession(session)
 	if err != nil {
 		return NewUnauthorizedError(err)
@@ -166,9 +160,6 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) 
 }
 
 func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Authenticate")
-	defer span.End()
-
 	id, err := uc.service.VerifyAndParseToken(ctx, token)
 	if err != nil {
 		return domain.User{}, NewUnauthorizedError(err)
