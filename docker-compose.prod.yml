@@ -51,6 +51,7 @@ services:
       - moilerplate-networks
     depends_on:
       - pg
+      - otel_collector
 
   pg:
     image: postgres:latest
@@ -77,11 +78,11 @@ services:
     ports:
       - "4318:4318" # OTLP over HTTP receiver
       - "9464:9464" # Prometheus exporter
+    networks:
+      - moilerplate-networks
     depends_on:
       - jaeger
       - prometheus
-    networks:
-      - moilerplate-networks
 
   # Jaeger
   jaeger:
@@ -114,10 +115,10 @@ services:
       - "3000:3000"
     volumes:
       - moilerplate-grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
     networks:
       - moilerplate-networks
+    depends_on:
+      - prometheus
 
   # If we want to enable netdata, uncomment these lines:
   # netdata:
