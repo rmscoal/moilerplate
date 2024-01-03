@@ -10,6 +10,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joho/godotenv"
 	"github.com/rmscoal/moilerplate/config"
+	"github.com/rmscoal/moilerplate/docs"
 	"github.com/rmscoal/moilerplate/internal/composer"
 	v1 "github.com/rmscoal/moilerplate/internal/delivery/v1"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
@@ -79,6 +80,14 @@ func (a *app) Run(args []string) int {
 	if err := a.loadEnv(); err != nil {
 		log.Fatal(err)
 	}
+
+	// Swagger documentation info
+	docs.SwaggerInfo.Title = "Moilerplate"
+	docs.SwaggerInfo.Description = "A monolithic RESTful API for Go"
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:8082"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	cfg := config.GetConfig()
 
