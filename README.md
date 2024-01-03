@@ -2,7 +2,7 @@
 > A monolith boilerplate for Golang backend applications built with love.
 
 > [!WARNING]<br>
-> In development
+> Alpha state
 
 ## Table of Contents
 - [Introduction](#introduction)
