@@ -91,6 +91,7 @@ As mentioned, I have provided the docker compose files which has the observabili
 - [localhost:16686](localhost:16686) for the Jaeger tracing,
 - [localhost:9090](localhost:9090) for Prometheus metrics,
 - [localhost:3000](localhost:3000) for Grafana.
+- [localhost:9094](localhost:9094) for Cassandra (able to CQLSH to the container)
 
 Make some API calls, and start building your dashboard in Grafana. Here is an example dashboard I've built in Moilerplate.
 
