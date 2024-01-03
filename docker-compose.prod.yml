@@ -48,7 +48,7 @@ services:
     ports:
       - 8082:8082
     networks:
-      - moilerplate-networks
+      - moilerplate-network
     depends_on:
       - pg
       - otel_collector
@@ -64,9 +64,9 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - moilerplate-pg-data:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql/data
     networks:
-      - moilerplate-networks
+      - moilerplate-network
 
   # OpenTelemetry Collector
   otel_collector:
@@ -79,7 +79,7 @@ services:
       - "4318:4318" # OTLP over HTTP receiver
       - "9464:9464" # Prometheus exporter
     networks:
-      - moilerplate-networks
+      - moilerplate-network
     depends_on:
       - jaeger
       - prometheus
@@ -88,11 +88,52 @@ services:
   jaeger:
     container_name: moilerplate_jaeger
     image: jaegertracing/all-in-one:1.41.0
+    environment:
+      - SPAN_STORAGE_TYPE=cassandra
+      - CASSANDRA_SERVERS=cassandra
+      - CASSANDRA_KEYSPACE=jaeger_v1_datacenter1
     ports:
       - "14250:14250" # Collector gRPC
       - "16686:16686" # Web HTTP
     networks:
-      - moilerplate-networks
+      - moilerplate-network
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      cassandra-schema:
+        condition: service_completed_successfully
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema:1.43
+    container_name: moilerplate_cassandra_schema
+    environment:
+      - CASSANDRA_PROTOCOL_VERSION=4
+      - CASSANDRA_VERSION=4
+      - CQLSH_HOST=cassandra
+      - DATACENTER=datacenter1 # Existing default datacenter
+      - MODE=prod
+      - REPLICATION_FACTOR=3
+    networks:
+      - moilerplate-network
+    depends_on:
+      cassandra:
+        condition: service_healthy
+
+  cassandra:
+    restart: always
+    image: cassandra:4.0
+    container_name: moilerplate_cassandra
+    ports:
+      - 9042:9042
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    networks:
+      - moilerplate-network
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 1s
+      retries: 120
+      timeout: 1s
 
   # Prometheus
   prometheus:
@@ -102,10 +143,11 @@ services:
       - --config.file=/etc/prometheus/prometheus.yaml
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yaml
+      - prometheus-data:/var/lib/prometheus
     ports:
       - "9090:9090"
     networks:
-      - moilerplate-networks
+      - moilerplate-network
 
   # Grafana
   grafana:
@@ -114,9 +156,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - moilerplate-grafana-data:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
     networks:
-      - moilerplate-networks
+      - moilerplate-network
     depends_on:
       - prometheus
 
@@ -151,11 +193,13 @@ services:
   #     - NETDATA_CLAIM_ROOMS=<FILL_IN>
 
 volumes:
-  moilerplate-pg-data:
-  moilerplate-grafana-data:
+  pg-data:
+  grafana-data:
+  prometheus-data:
+  cassandra-data:
   # If we want to enable netdata, uncomment these lines:
   # moilerplate-netdataconfig:
   # moilerplate-netdatalib:
   # moilerplate-netdatacache:
 networks:
-  moilerplate-networks:
+  moilerplate-network:
