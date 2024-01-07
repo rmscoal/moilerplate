@@ -9,11 +9,13 @@ import (
 
 	"github.com/rmscoal/moilerplate/internal/domain"
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/testdata/observability"
 	mockrepo "github.com/rmscoal/moilerplate/testdata/repo"
 	mockservice "github.com/rmscoal/moilerplate/testdata/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"go.opentelemetry.io/otel"
 )
 
 var (
@@ -82,6 +84,9 @@ type CredentialUseCaseTestSuite struct {
 func (suite *CredentialUseCaseTestSuite) SetupTest() {
 	suite.repo = new(mockrepo.CredentialRepoMock)
 	suite.service = new(mockservice.DoorkeeperServiceMock)
+
+	// Set otel to use dummy/testing tracer provider
+	otel.SetTracerProvider(observability.NewTestingTracerProvider())
 }
 
 func TestCredentialUseCase(t *testing.T) {
