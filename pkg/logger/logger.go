@@ -40,7 +40,7 @@ func (l *AppLogger) Warn(args ...interface{}) {
 
 // Error -.
 func (l *AppLogger) Error(args ...interface{}) {
-	l.logger.Error(args)
+	l.logger.Error(args...)
 }
 
 // Getter methods
