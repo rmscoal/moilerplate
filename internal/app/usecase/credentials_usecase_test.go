@@ -9,9 +9,9 @@ import (
 
 	"github.com/rmscoal/moilerplate/internal/domain"
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
-	"github.com/rmscoal/moilerplate/testdata/observability"
-	mockrepo "github.com/rmscoal/moilerplate/testdata/repo"
-	mockservice "github.com/rmscoal/moilerplate/testdata/service"
+	"github.com/rmscoal/moilerplate/testing/observability"
+	mockrepo "github.com/rmscoal/moilerplate/testing/repo"
+	mockservice "github.com/rmscoal/moilerplate/testing/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
