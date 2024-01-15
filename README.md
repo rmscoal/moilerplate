@@ -13,6 +13,7 @@
 - [What's already included in Moilerplate?](#What's-already-included-in-Moilerplate?)
   - [Security](#security)
   - [Observability](#observability)
+  - [Database Design] (#database-design)
 - [Contributions](#contributions)
 
 ## Introduction
@@ -118,6 +119,12 @@ sum(http_server_request_count{job="collector"}) by (http_route)
 ```promql
 histogram_quantile(0.99, sum(rate(http_server_request_duration_bucket{job="collector"}[1d])) by (le, http_route))
 ```
+
+### Database Design
+Here are the entities that are currently on Moilerplate.
+<img src="./static/erd.png" width="750px">
+
+I have also provided `erd.dbml` for you to document your ERD if there are any changes. Head to [dbdocs](https://dbdocs.io/) for this tool.
 
 ## Contributions
 Moilerplate is open to suggestion and feel free to raise a PR.
