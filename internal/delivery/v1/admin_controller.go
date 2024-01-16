@@ -47,6 +47,6 @@ func (controller *AdminController) loginHandler(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("x-session-key", session.Session, int(session.Expiry.Unix()), "/api/v1/docs", "localhost", false, true)
+	c.SetCookie("x-session-key", session.Session, 3600, "/api/v1/docs", "localhost", true, true)
 	c.Redirect(http.StatusFound, "index.html")
 }

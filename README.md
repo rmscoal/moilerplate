@@ -1,8 +1,7 @@
 # Moilerplate
 > A monolith boilerplate for Golang backend applications built with love.
 
-> [!WARNING]<br>
-> Alpha state
+> [!WARNING]<br> Alpha state
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -95,6 +94,13 @@ As mentioned, I have provided the docker compose files which has the observabili
 - [localhost:9094](localhost:9094) for Cassandra (able to CQLSH to the container)
 
 Make some API calls, and start building your dashboard in Grafana. Here is an example dashboard I've built in Moilerplate.
+
+### Load Testing
+Inside the folder `testing/load_testing` there exists a k6 script load test files written in JavaScript that can be use to load test Moilerplate. Please read through [k6](https://k6.io/) documentation page on how to write and setup.
+For a simple try, assuming you have installed, you ma run
+```bash
+k6 run --vus 10 --duration 30s testing/load_testing/k6_user_test.js
+```
 
 <img src="static/grafana-moilerplate.png" width="750px">
 
