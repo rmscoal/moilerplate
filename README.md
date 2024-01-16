@@ -12,7 +12,8 @@
 - [What's already included in Moilerplate?](#What's-already-included-in-Moilerplate?)
   - [Security](#security)
   - [Observability](#observability)
-  - [Database Design] (#database-design)
+  - [Load Testing](#load-testing)
+- [Database Design](#database-design)
 - [Contributions](#contributions)
 
 ## Introduction
@@ -95,13 +96,6 @@ As mentioned, I have provided the docker compose files which has the observabili
 
 Make some API calls, and start building your dashboard in Grafana. Here is an example dashboard I've built in Moilerplate.
 
-### Load Testing
-Inside the folder `testing/load_testing` there exists a k6 script load test files written in JavaScript that can be use to load test Moilerplate. Please read through [k6](https://k6.io/) documentation page on how to write and setup.
-For a simple try, assuming you have installed, you ma run
-```bash
-k6 run --vus 10 --duration 30s testing/load_testing/k6_user_test.js
-```
-
 <img src="static/grafana-moilerplate.png" width="750px">
 
 If you want to have this exact same dashboard, here are the PromQLs:
@@ -126,11 +120,18 @@ sum(http_server_request_count{job="collector"}) by (http_route)
 histogram_quantile(0.99, sum(rate(http_server_request_duration_bucket{job="collector"}[1d])) by (le, http_route))
 ```
 
-### Database Design
+### Load Testing
+Inside the folder `testing/load_testing` there exists a k6 script load test files written in JavaScript that can be use to load test Moilerplate. Please read through [k6](https://k6.io/) documentation page on how to write and setup.
+For a simple try, assuming you have installed, you ma run
+```bash
+k6 run --vus 10 --duration 30s testing/load_testing/k6_user_test.js
+```
+
+## Database Design
 Here are the entities that are currently on Moilerplate.
 <img src="./static/erd.png" width="750px">
 
-I have also provided `erd.dbml` for you to document your ERD if there are any changes. Head to [dbdocs](https://dbdocs.io/) for this tool.
+I have also provided `database.dbml` for you to document your ERD if there are any changes. Head to [dbdocs](https://dbdocs.io/) for this tool.
 
 ## Contributions
 Moilerplate is open to suggestion and feel free to raise a PR.
