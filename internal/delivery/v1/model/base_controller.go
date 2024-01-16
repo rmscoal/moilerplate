@@ -21,9 +21,13 @@ type Error struct {
 	Error      any    `json:"error,omitempty"`
 }
 
+func (bc BaseControllerV1) apiVersion() string {
+	return "v1.0"
+}
+
 func (bc BaseControllerV1) jsonErrResponse(c *gin.Context, code int, err any) {
 	c.AbortWithStatusJSON(code, Error{
-		ApiVersion: "1.0",
+		ApiVersion: bc.apiVersion(),
 		Error:      err,
 	})
 }
@@ -31,13 +35,13 @@ func (bc BaseControllerV1) jsonErrResponse(c *gin.Context, code int, err any) {
 func (bc BaseControllerV1) Ok(c *gin.Context, obj ...any) {
 	if len(obj) == 0 {
 		c.JSON(http.StatusOK, Data{
-			ApiVersion: "1.0",
+			ApiVersion: bc.apiVersion(),
 			Status:     "OK",
 		})
 		return
 	}
 	c.JSON(http.StatusOK, Data{
-		ApiVersion: "1.0",
+		ApiVersion: bc.apiVersion(),
 		Status:     "OK",
 		Data:       obj[0],
 	})
@@ -53,7 +57,7 @@ func (bc BaseControllerV1) OkWithPage(c *gin.Context, obj ...any) {
 		return
 	}
 	c.JSON(http.StatusOK, Data{
-		ApiVersion: "1.0",
+		ApiVersion: bc.apiVersion(),
 		Status:     "OK",
 		Data:       obj[0],
 		Paging:     obj[1],
@@ -63,13 +67,13 @@ func (bc BaseControllerV1) OkWithPage(c *gin.Context, obj ...any) {
 func (bc BaseControllerV1) Created(c *gin.Context, obj ...any) {
 	if len(obj) == 0 {
 		c.JSON(http.StatusCreated, Data{
-			ApiVersion: "1.0",
+			ApiVersion: bc.apiVersion(),
 			Status:     "OK",
 		})
 		return
 	}
 	c.JSON(http.StatusCreated, Data{
-		ApiVersion: "1.0",
+		ApiVersion: bc.apiVersion(),
 		Status:     "OK",
 		Data:       obj[0],
 	})
