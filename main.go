@@ -5,7 +5,6 @@ import (
 )
 
 func main() {
-	// Test1
 	// Execute the app
 	cmd.Execute()
 }
