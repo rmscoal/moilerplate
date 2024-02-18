@@ -8,6 +8,11 @@ type SignUpRequest struct {
 	PhoneNumber string `json:"phoneNumber,omitempty" example:"628123456789"`
 }
 
+type SignUpResponse struct {
+	Username string `json:"username,omitempty" example:"my first last name"`
+	Email    string `json:"email,omitempty" example:"email@email.com"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username,omitempty" example:"Username"`
 	Password string `json:"password,omitempty" example:"verystrongpassword"`
@@ -22,5 +27,3 @@ type TokenResponse struct {
 type RefreshRequest struct {
 	RefreshToken string `json:"refreshToken,omitempty" example:"refreshTokenHere"`
 }
-
-type RefreResponse TokenResponse

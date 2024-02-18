@@ -38,6 +38,20 @@ func NewCredentialController(rg *gin.RouterGroup, uc usecase.ICredentialUseCase,
 Controllers
 *************************************************
 */
+
+// SignupHandler godoc
+//
+//	@Summary		Sign up handler
+//	@Description	Handles sign up for new users
+//	@Tags			Credentials
+//	@Accept			json
+//	@Produce		json
+//	@Param			signUpRequest	body		dto.SignUpRequest					true	"Signup request body"
+//	@Success		200				{object}	model.Data{data=dto.SignUpResponse}
+//	@Failure		409				{object}	model.Error{error=usecase.AppError}
+//	@Failure		422				{object}	model.Error{error=usecase.AppError}
+//	@Failure		500				{object}	model.Error{error=usecase.AppError}
+//	@Router			/credentials/signup [post]
 func (controller *CredentialController) signupHandler(c *gin.Context) {
 	var req dto.SignUpRequest
 
@@ -52,7 +66,7 @@ func (controller *CredentialController) signupHandler(c *gin.Context) {
 		return
 	}
 
-	controller.Ok(c, user)
+	controller.Ok(c, mapper.Credential.UserDomainToSignUpResponse(user))
 }
 
 func (controller *CredentialController) loginHandler(c *gin.Context) {

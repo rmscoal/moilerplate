@@ -18,3 +18,10 @@ func (credentialMapper) SignupRequestToUserDomain(req dto.SignUpRequest) domain.
 		Password:    req.Password,
 	}
 }
+
+func (credentialMapper) UserDomainToSignUpResponse(user domain.User) dto.SignUpResponse {
+	return dto.SignUpResponse{
+		Username: user.Username,
+		Email:    user.Email,
+	}
+}

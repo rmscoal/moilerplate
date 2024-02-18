@@ -14,7 +14,216 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/credentials/signup": {
+            "post": {
+                "description": "Handles sign up for new users",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Credentials"
+                ],
+                "summary": "Sign up handler",
+                "parameters": [
+                    {
+                        "description": "Signup request body",
+                        "name": "signUpRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.SignUpRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.Data"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SignUpResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.Error"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/usecase.AppError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.Error"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/usecase.AppError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.Error"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/usecase.AppError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.SignUpRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "email@email.com"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "my first last name"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "verystrongpassword"
+                },
+                "phoneNumber": {
+                    "type": "string",
+                    "example": "628123456789"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "Username"
+                }
+            }
+        },
+        "dto.SignUpResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "email@email.com"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "my first last name"
+                }
+            }
+        },
+        "model.Data": {
+            "type": "object",
+            "properties": {
+                "apiVersion": {
+                    "type": "string",
+                    "example": "1.0"
+                },
+                "data": {},
+                "paging": {
+                    "x-nullable": true,
+                    "x-omitempty": true
+                },
+                "status": {
+                    "type": "string",
+                    "example": "OK"
+                }
+            }
+        },
+        "model.Error": {
+            "type": "object",
+            "properties": {
+                "apiVersion": {
+                    "type": "string",
+                    "example": "1.0"
+                },
+                "error": {}
+            }
+        },
+        "usecase.AppError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/usecase.AppErrorDetail"
+                    }
+                },
+                "message": {
+                    "type": "string",
+                    "example": "this is error message"
+                }
+            }
+        },
+        "usecase.AppErrorDetail": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string",
+                    "example": "domain error"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "this is descriptive error message"
+                },
+                "reason": {
+                    "type": "string",
+                    "example": "this is descriptive error reason"
+                },
+                "report": {
+                    "type": "string",
+                    "example": "Please report incident to https://your-report.com"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
