@@ -20,22 +20,30 @@ func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeper
 	return &credentialUseCase{repo: repo, service: service, tracer: otel.Tracer("credential_usecase")}
 }
 
-// Login handle user signin for first time user and generate pair of a jwts
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
-	panic("not implemented") // TODO: Implement
+	ctx, span := uc.tracer.Start(ctx, "usecase.SignUp")
+	defer span.End()
+
+	if err := user.Validate(); err != nil {
+		return user, NewDomainError("User", err)
+	}
+
+	user, err := uc.repo.CreateUser(ctx, user)
+	if err != nil {
+		return user, NewRepositoryError("User", err)
+	}
+
+	return user, nil
 }
 
-// Login handle user login and generate pair of jwts
 func (uc *credentialUseCase) Login(ctx context.Context, user domain.User) (domain.User, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-// Authenticates authenticates user from the given jwt.
 func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-// Refresh validates refresh tokens and generates a new set of tokens.
 func (uc *credentialUseCase) Refresh(ctx context.Context, token string) (domain.User, error) {
 	panic("not implemented") // TODO: Implement
 }

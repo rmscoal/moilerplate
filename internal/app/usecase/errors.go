@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrUnexpected          = errors.New("something unexpected had occured")
+	ErrUnexpected          = errors.New("something unexpected had occurred")
 	ErrRequestTimeout      = errors.New("query took too long or client cancelled the request")
 	ErrInvalidInput        = errors.New("invalid input syntax")
 	ErrUnprocessableEntity = errors.New("unable to process entity")
@@ -15,6 +15,7 @@ var (
 	ErrConflictState       = errors.New("conflict state")
 	ErrUnauthorized        = errors.New("unauthorized action")
 	ErrForbidden           = errors.New("forbidden")
+	ErrTooManyRequest      = errors.New("too many request")
 )
 
 var ErrNameMapper = map[error]string{
@@ -82,6 +83,10 @@ func NewErrorWithReport(domain string, code int, errType, err error, report stri
 	return nErr
 }
 
+func NewClientError(domain string, err error) error {
+	return NewError(domain, 400, ErrBadRequest, err)
+}
+
 /* - Repository Group Errors - */
 
 // NewConflictError return either 409 for any conflict state on the database
@@ -108,7 +113,14 @@ func NewNotFoundError(domain string, err error) error {
 
 // NewRepositoryError returns a 500 in case the db connection died or others
 func NewRepositoryError(domain string, err error) error {
-	return NewError(domain+" Repository", 500, ErrUnexpected, err)
+	switch {
+	case errors.Is(err, ErrUnexpected):
+		return NewError(domain+" Repository", 500, ErrUnexpected, err)
+	case errors.Is(err, ErrNotFound):
+		return NewError(domain+" Repository", 404, ErrNotFound, err)
+	default:
+		return NewError(domain+" Repository", 409, ErrConflictState, err)
+	}
 }
 
 /* - Domain Group Errors - */
@@ -128,6 +140,11 @@ func NewUnauthorizedErrorWithReport(err error) error {
 }
 
 /* - Service Group Errors - */
+
+// NewRateLimittedError returns 429 when it has too many request
+func NewTooManyRequest(err error) error {
+	return NewError("Rate Limitted", 429, ErrTooManyRequest, err)
+}
 
 // NewServiceError returns 500 when a service/third party fails
 func NewServiceError(domain string, err error) error {

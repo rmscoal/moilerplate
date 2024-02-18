@@ -45,5 +45,5 @@ func (c *repoComposer) Migrate() {
 		log.Fatalf("FATAL - Unable to automigrate models: %s", err)
 	}
 
-	impl.InitBaseRepo(c.db.ORM)
+	impl.InitBaseRepo(c.db.ORM, true)
 }

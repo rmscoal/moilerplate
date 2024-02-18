@@ -36,19 +36,22 @@ type baseRepo struct {
 
 var gormRepo *baseRepo
 
-func InitBaseRepo(db *gorm.DB) error {
+func InitBaseRepo(db *gorm.DB, registerConstraints bool) error {
 	gormRepo = &baseRepo{
 		db:          db,
 		constraints: make(map[string]string, 0),
 		tracer:      otel.Tracer("gorm_repo_tracer"),
 	}
 
-	if err := gormRepo.registerIndexes(); err != nil {
-		return err
-	}
+	if registerConstraints {
+		if err := gormRepo.registerIndexes(); err != nil {
+			return err
+		}
 
-	if err := gormRepo.registerForeignKeys(); err != nil {
-		return err
+		if err := gormRepo.registerForeignKeys(); err != nil {
+			return err
+		}
+
 	}
 
 	return nil

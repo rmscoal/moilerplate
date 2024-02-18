@@ -2,13 +2,17 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/rmscoal/moilerplate/internal/app/service"
 	"github.com/rmscoal/moilerplate/internal/app/usecase"
 	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/dto"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/dto/mapper"
+	"github.com/rmscoal/moilerplate/internal/delivery/v1/model"
 )
 
 type CredentialController struct {
-	BaseControllerV1
+	model.BaseControllerV1
 	uc  usecase.ICredentialUseCase
 	svc service.IRaterService
 }
@@ -35,6 +39,20 @@ Controllers
 *************************************************
 */
 func (controller *CredentialController) signupHandler(c *gin.Context) {
+	var req dto.SignUpRequest
+
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
+		controller.ClientError(c, usecase.NewClientError("Body", err))
+		return
+	}
+
+	user, err := controller.uc.SignUp(c.Request.Context(), mapper.Credential.SignupRequestToUserDomain(req))
+	if err != nil {
+		controller.SummariesUseCaseError(c, err)
+		return
+	}
+
+	controller.Ok(c, user)
 }
 
 func (controller *CredentialController) loginHandler(c *gin.Context) {

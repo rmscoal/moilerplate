@@ -12,7 +12,7 @@ tmp_dir = "tmp"
   exclude_regex = ["_test.go", ".md"]
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = "swag fmt && swag init -g ./cmd/app/main.go --output swagger --quiet && ./tmp/main server --env-path=.env"
+  full_bin = "swag fmt && swag init -g ./cmd/app/main.go --output swagger --quiet && ./tmp/main server --env-path=.env --mode=DEVELOPMENT"
   include_dir = []
   include_ext = ["go", "tpl", "tmpl", "html"]
   include_file = []

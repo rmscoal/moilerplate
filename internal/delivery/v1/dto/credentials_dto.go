@@ -1,9 +1,10 @@
 package dto
 
 type SignUpRequest struct {
+	Name        string `json:"name,omitempty" example:"my first last name"`
+	Email       string `json:"email,omitempty" example:"email@email.com"`
 	Username    string `json:"username,omitempty" example:"Username"`
 	Password    string `json:"password,omitempty" example:"verystrongpassword"`
-	Email       string `json:"email,omitempty" example:"email@email.com"`
 	PhoneNumber string `json:"phoneNumber,omitempty" example:"628123456789"`
 }
 

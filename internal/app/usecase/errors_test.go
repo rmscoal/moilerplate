@@ -44,10 +44,30 @@ func TestNewNotFoundError(t *testing.T) {
 }
 
 func TestNewRepositoryError(t *testing.T) {
-	err := NewRepositoryError("Test", errors.New("test error"))
-	assert.Error(t, err)
-	assert.ErrorAs(t, err, &AppError{})
-	assert.ErrorContains(t, err, ErrUnexpected.Error())
+	t.Run("ErrUnexpected", func(t *testing.T) {
+		err := NewRepositoryError("Test", ErrUnexpected)
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &AppError{})
+		assert.ErrorContains(t, err, ErrUnexpected.Error())
+	})
+	t.Run("ErrConflictState", func(t *testing.T) {
+		err := NewRepositoryError("Test", ErrConflictState)
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &AppError{})
+		assert.ErrorContains(t, err, ErrConflictState.Error())
+	})
+	t.Run("ErrNotFound", func(t *testing.T) {
+		err := NewRepositoryError("Test", ErrNotFound)
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &AppError{})
+		assert.ErrorContains(t, err, ErrNotFound.Error())
+	})
+	t.Run("Unknown", func(t *testing.T) {
+		err := NewRepositoryError("Test", errors.New("random error"))
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &AppError{})
+		assert.ErrorContains(t, err, ErrConflictState.Error())
+	})
 }
 
 func TestNewServiceError(t *testing.T) {
@@ -69,4 +89,10 @@ func TestNewUnauthorizedError(t *testing.T) {
 	assert.Error(t, err)
 	assert.ErrorAs(t, err, &AppError{})
 	assert.ErrorContains(t, err, ErrUnauthorized.Error())
+}
+
+func TestNewTooManyRequest(t *testing.T) {
+	err := NewTooManyRequest(errors.New("test error"))
+	assert.ErrorAs(t, err, &AppError{})
+	assert.ErrorContains(t, err, ErrTooManyRequest.Error())
 }
