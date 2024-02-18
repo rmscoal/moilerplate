@@ -6,7 +6,6 @@ import (
 	"github.com/rmscoal/moilerplate/internal/app/repo"
 	"github.com/rmscoal/moilerplate/internal/app/service"
 	"github.com/rmscoal/moilerplate/internal/domain"
-	"github.com/rmscoal/moilerplate/internal/domain/vo"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -27,7 +26,7 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 }
 
 // Login handle user login and generate pair of jwts
-func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
+func (uc *credentialUseCase) Login(ctx context.Context, user domain.User) (domain.User, error) {
 	panic("not implemented") // TODO: Implement
 }
 

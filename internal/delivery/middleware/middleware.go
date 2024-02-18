@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -41,17 +42,17 @@ func NewMiddleware() *Middleware {
 }
 
 func (m *Middleware) addToContext(c *gin.Context, key string, value any) {
-	// Passing value by context is the best practice, however let's try gin's feature
+	// Passing value by context is the best practice.
 	// Pass value to context code:
 	//
-	// c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), key, value))
+	c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), key, value))
 	//
 	// and receive it like:
 	//
 	// pquery := c.Request.Context().Value(keyAsString).(dto.PaginationDTORequest)
 
-	if c.Keys == nil {
-		c.Keys = make(map[string]any)
-	}
-	c.Keys[key] = value
+	// if c.Keys == nil {
+	// 	c.Keys = make(map[string]any)
+	// }
+	// c.Keys[key] = value
 }
