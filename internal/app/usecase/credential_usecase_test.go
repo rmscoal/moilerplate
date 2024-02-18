@@ -33,6 +33,7 @@ func (suite *CredentialUseCaseTestSuite) SetupTest() {
 }
 
 func (suite *CredentialUseCaseTestSuite) TestSignUp_Success() {
+	ctx := context.Background()
 	newUser := domain.User{
 		Name:        "Rifky Satyana",
 		Username:    "rmscoal",
@@ -41,13 +42,51 @@ func (suite *CredentialUseCaseTestSuite) TestSignUp_Success() {
 		Password:    "verystrongpassword",
 	}
 
-	savedUser := newUser
-	savedUser.ID = "some_id"
+	encodedUser := newUser
+	encodedUser.Password = "hashed string"
+	suite.dkSvc.On("HashAndEncodeStringWithSalt", ctx, newUser.Password, newUser.Username).Return("hashed string")
 
-	suite.credRepo.On("CreateUser", context.Background(), newUser).Return(savedUser, nil)
+	savedUser := encodedUser
+	savedUser.ID = "some id"
+	suite.credRepo.On("CreateUser", ctx, encodedUser).Return(savedUser, nil)
 
 	uc := NewCredentialUseCase(suite.credRepo, suite.dkSvc)
-	result, err := uc.SignUp(context.Background(), newUser)
+	result, err := uc.SignUp(ctx, newUser)
 	assert.Nil(suite.T(), err)
 	assert.NotEmpty(suite.T(), result.ID)
+	assert.Equal(suite.T(), savedUser.Password, result.Password)
+}
+
+func (suite *CredentialUseCaseTestSuite) TestSignup_Fail_Validation() {
+	ctx := context.Background()
+	newUser := domain.User{
+		Password: "verystrongpassword",
+	}
+
+	uc := NewCredentialUseCase(suite.credRepo, suite.dkSvc)
+	result, err := uc.SignUp(ctx, newUser)
+	assert.ErrorContains(suite.T(), err, ErrUnprocessableEntity.Error())
+	assert.Equal(suite.T(), newUser, result)
+}
+
+func (suite *CredentialUseCaseTestSuite) TestSignup_Fail_CreateUserRepo() {
+	ctx := context.Background()
+	newUser := domain.User{
+		Name:        "Rifky Satyana",
+		Username:    "rmscoal",
+		Email:       "rmscoaldev@gmail.com",
+		PhoneNumber: "6281234274916",
+		Password:    "verystrongpassword",
+	}
+
+	encodedUser := newUser
+	encodedUser.Password = "hashed string"
+	suite.dkSvc.On("HashAndEncodeStringWithSalt", ctx, newUser.Password, newUser.Username).Return("hashed string")
+
+	suite.credRepo.On("CreateUser", ctx, encodedUser).Return(encodedUser, ErrUnexpected)
+
+	uc := NewCredentialUseCase(suite.credRepo, suite.dkSvc)
+	result, err := uc.SignUp(ctx, newUser)
+	assert.ErrorContains(suite.T(), err, ErrUnexpected.Error())
+	assert.Equal(suite.T(), encodedUser, result)
 }

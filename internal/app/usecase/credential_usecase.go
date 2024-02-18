@@ -28,6 +28,8 @@ func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (doma
 		return user, NewDomainError("User", err)
 	}
 
+	user.Password = uc.service.HashAndEncodeStringWithSalt(ctx, user.Password, user.Username)
+
 	user, err := uc.repo.CreateUser(ctx, user)
 	if err != nil {
 		return user, NewRepositoryError("User", err)
