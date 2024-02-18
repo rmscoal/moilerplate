@@ -16,7 +16,6 @@ import (
 	v1 "github.com/rmscoal/moilerplate/internal/delivery/v1"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	httpserver "github.com/rmscoal/moilerplate/pkg/http"
-	"github.com/rmscoal/moilerplate/pkg/logger"
 	"github.com/rmscoal/moilerplate/pkg/observability"
 	"github.com/rmscoal/moilerplate/pkg/postgres"
 	"github.com/rmscoal/moilerplate/pkg/rater"
@@ -122,9 +121,6 @@ func (a *app) Run(args []string) int {
 		postgres.SetMode(a.flagMode),
 	)
 
-	// Logger .-.
-	logger := logger.NewAppLogger(cfg.App.LogPath())
-
 	// Doorkeeper .-.
 	dk := doorkeeper.GetDoorkeeper(
 		// JWT
@@ -165,7 +161,7 @@ func (a *app) Run(args []string) int {
 	deliveree := a.newDeliveryEngine()
 
 	// Http
-	v1.NewRouter(deliveree, logger, usecaseComposer, serviceComposer)
+	v1.NewRouter(deliveree, usecaseComposer, serviceComposer)
 	httpserver.NewServer(deliveree,
 		httpserver.RegisterHostAndPort(cfg.Server.Host, cfg.Server.Port),
 		httpserver.StartSecure(a.flagSecure, a.flagServerCertPath, a.flagServerKeyPath),

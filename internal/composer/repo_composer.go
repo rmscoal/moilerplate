@@ -12,7 +12,6 @@ import (
 
 type IRepoComposer interface {
 	CredentialRepo() repo.ICredentialRepo
-	UserProfileRepo() repo.IUserProfileRepo
 	Migrate()
 }
 
@@ -32,15 +31,13 @@ func NewRepoComposer(db *postgres.Postgres) IRepoComposer {
 }
 
 // -------------- DI --------------
+
 func (c *repoComposer) CredentialRepo() repo.ICredentialRepo {
 	return impl.NewCredentialRepo()
 }
 
-func (c *repoComposer) UserProfileRepo() repo.IUserProfileRepo {
-	return impl.NewUserProfileRepo()
-}
-
 // -------------- Setups --------------
+
 func (c *repoComposer) Migrate() {
 	if err := c.db.ORM.AutoMigrate(
 		model.GetAllRelationalModels()...,

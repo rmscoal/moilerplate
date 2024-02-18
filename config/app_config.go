@@ -4,14 +4,12 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type appConfig struct {
-	logPath                 string
 	raterLimit              int
 	burstLimit              int
 	raterEvaluationInterval time.Duration
@@ -23,9 +21,7 @@ type appConfig struct {
 // such that it loads the serverConfig to the main
 // Config.
 func (c *Config) newAppConfig() {
-	a := appConfig{
-		logPath: strings.ToLower(os.Getenv("LOG_PATH")),
-	}
+	var a appConfig
 
 	if err := a.parse(); err != nil {
 		log.Fatalf("Error while parsing app configuration: %s\n", err)
@@ -41,9 +37,7 @@ func (c *Config) newAppConfig() {
 // validate method    validates the serverConfig
 // values such that it meets the requirements.
 func (a appConfig) validate() error {
-	return validation.ValidateStruct(&a,
-		validation.Field(&a.logPath, validation.Required),
-	)
+	return validation.ValidateStruct(&a)
 }
 
 // parse method    parses a string value from env to
@@ -78,9 +72,6 @@ func (a *appConfig) parse() (err error) {
 }
 
 // Getter functions for getting app configurations
-func (a appConfig) LogPath() string {
-	return a.logPath
-}
 
 func (a appConfig) RaterLimit() int {
 	return a.raterLimit

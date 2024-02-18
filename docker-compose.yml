@@ -29,19 +29,19 @@ services:
       - BURST_LIMIT=2
       - RATER_EVALUATION_INTERVAL=1m
       - RATER_DELETION_TIME=3m
-      # Doorkeeper
-      - DOORKEEPER_ISSUER=MOILERPLATE
-      - DOORKEEPER_HASH_METHOD=SHA384
-      - DOORKEEPER_SIGNING_METHOD=HMAC
-      - DOORKEEPER_SIGN_SIZE=256
-      # Secret key only for HMAC
-      - DOORKEEPER_SECRET_KEY=verystrongsecretkey
-      # Keep empty if you want to use HMAC
-      - DOORKEEPER_CERT_PATH=
-      # Admin key for accessing documentation resources or more
-      - DOORKEEPER_ADMIN_KEY=verystrongpassword
-      - DOORKEEPER_ACCESS_TOKEN_DURATION=1h
-      - DOORKEEPER_REFRESH_TOKEN_DURATION=24h
+      # Doorkeeper General
+      - DOORKEEPER_GENERAL_HASH_METHOD=SHA384
+      # Doorkeeper JWT
+      - DOORKEEPER_JWT_ISSUER=SUN_REC
+      - DOORKEEPER_JWT_SIGNING_METHOD=HMAC
+      - DOORKEEPER_JWT_SIGN_SIZE=256
+      - DOORKEEPER_JWT_PUB_KEY=jnvajiqjnrnjifji32jav923jvuhiah
+      - DOORKEEPER_JWT_PRIV_KEY=jnvajiqjnrnjifji32jav923jvuhiah
+        # If you choose HMAC, please fill both jwt priv and pub key with your secret key
+      - DOORKEEPER_JWT_ACCESS_TOKEN_DURATION=1h
+      - DOORKEEPER_JWT_REFRESH_TOKEN_DURATION=24h
+        # Doorkeeper Encryption
+      - DOORKEEPER_ENCRYPTOR_SECRET_KEY=kjsdJKNfajJKfajrkjKjkjkfnewa
       # Opentelemetry configurations
       - OTEL_TRACE_ENDPOINT=otel_collector:4318
       - OTEL_METRIC_ENDPOINT=otel_collector:4318

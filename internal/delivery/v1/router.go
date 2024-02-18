@@ -7,16 +7,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/moilerplate/internal/composer"
 	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
-	"github.com/rmscoal/moilerplate/pkg/logger"
 )
 
 //go:embed web/*
 var web embed.FS
 
-func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer, svcComposer composer.IServiceComposer) {
+func NewRouter(r *gin.Engine, ucComposer composer.IUseCaseComposer, svcComposer composer.IServiceComposer) {
 	r.Use(middleware.NewMiddleware().MetricsMiddleware())
 	r.Use(middleware.NewMiddleware().TraceMiddleware())
-	r.Use(middleware.LogRequestMiddleware(logger))
 
 	// Load all web html templates
 	htmls := template.Must(template.ParseFS(web, "web/**/*.html"))
