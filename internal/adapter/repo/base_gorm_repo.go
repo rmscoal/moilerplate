@@ -36,14 +36,14 @@ type baseRepo struct {
 
 var gormRepo *baseRepo
 
-func InitBaseRepo(db *gorm.DB, registerConstraints bool) error {
+func InitBaseRepo(db *gorm.DB, skipRegistry bool) error {
 	gormRepo = &baseRepo{
 		db:          db,
 		constraints: make(map[string]string, 0),
 		tracer:      otel.Tracer("gorm_repo_tracer"),
 	}
 
-	if registerConstraints {
+	if !skipRegistry {
 		if err := gormRepo.registerIndexes(); err != nil {
 			return err
 		}
@@ -51,7 +51,6 @@ func InitBaseRepo(db *gorm.DB, registerConstraints bool) error {
 		if err := gormRepo.registerForeignKeys(); err != nil {
 			return err
 		}
-
 	}
 
 	return nil
@@ -119,6 +118,10 @@ func (repo *baseRepo) registerForeignKeys() error {
 }
 
 func (repo *baseRepo) DetectConstraintError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		switch SQLSTATE(pgErr.Code) {
 		case DuplicateError:
@@ -132,8 +135,13 @@ func (repo *baseRepo) DetectConstraintError(err error) error {
 }
 
 func (repo *baseRepo) DetectNotFoundError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return usecase.ErrNotFound
 	}
+
 	return usecase.ErrUnexpected
 }
