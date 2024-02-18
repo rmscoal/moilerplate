@@ -14,115 +14,133 @@ import (
 // Option .-.
 type Option func(*Doorkeeper)
 
-func RegisterCertPath(path string) Option {
-	return func(d *Doorkeeper) {
-		d.certPath = path
-	}
-}
+// --- JWT ---
 
-func RegisterAccessDuration(t time.Duration) Option {
+func RegisterJWTAccessDuration(t time.Duration) Option {
 	return func(d *Doorkeeper) {
 		if t > 0 {
-			d.AccessDuration = t
+			d.JWT.accessDuration = t
 		}
 	}
 }
 
-func RegisterRefreshDuration(t time.Duration) Option {
+func RegisterJWTRefreshDuration(t time.Duration) Option {
 	return func(d *Doorkeeper) {
 		if t > 0 {
-			d.RefreshDuration = t
+			d.JWT.refreshDuration = t
 		}
 	}
 }
 
-func RegisterIssuer(iss string) Option {
+func RegisterJWTIssuer(iss string) Option {
 	return func(d *Doorkeeper) {
-		d.issuer = iss
-	}
-}
-
-func RegisterSecretKey(secret string) Option {
-	return func(d *Doorkeeper) {
-		d.secretKey = secret
-	}
-}
-
-// RegisterAdminKey registers the admin key and store the hashed using sha256
-// of the key.
-func RegisterAdminKey(secret string) Option {
-	return func(d *Doorkeeper) {
-		sha := sha256.Sum256(utils.ConvertStringToByteSlice(secret))
-		d.adminKey = string(sha[:])
-	}
-}
-
-func RegisterHasherFunc(alg string) Option {
-	return func(d *Doorkeeper) {
-		switch alg {
-		case "SHA1":
-			d.hasherFunc = sha1.New
-		case "SHA224":
-			d.hasherFunc = sha256.New224
-		case "SHA256":
-			d.hasherFunc = sha256.New
-		case "SHA384":
-			d.hasherFunc = sha512.New384
-		case "SHA512":
-			d.hasherFunc = sha512.New
-		case "SHA3_224":
-			d.hasherFunc = sha3.New224
-		case "SHA3_256":
-			d.hasherFunc = sha3.New256
-		case "SHA3_384":
-			d.hasherFunc = sha3.New384
-		case "SHA3_512":
-			d.hasherFunc = sha3.New512
+		if iss != "" {
+			d.JWT.issuer = iss
 		}
 	}
 }
 
-func RegisterSignMethod(alg, size string) Option {
+func RegisterJWTPrivateKey(priv string) Option {
+	return func(d *Doorkeeper) {
+		d.JWT.privateKey = utils.ConvertStringToByteSlice(priv)
+	}
+}
+
+func RegisterJWTPublicKey(pub string) Option {
+	return func(d *Doorkeeper) {
+		d.JWT.publicKey = utils.ConvertStringToByteSlice(pub)
+	}
+}
+
+func RegisterJWTSignMethod(alg, size string) Option {
 	return func(d *Doorkeeper) {
 		switch alg {
 		case "HMAC":
 			switch size {
 			case "256":
-				d.signMethod = jwt.SigningMethodHS256
+				d.JWT.signMethod = jwt.SigningMethodHS256
 			case "384":
-				d.signMethod = jwt.SigningMethodHS384
+				d.JWT.signMethod = jwt.SigningMethodHS384
 			case "512":
-				d.signMethod = jwt.SigningMethodHS512
+				d.JWT.signMethod = jwt.SigningMethodHS512
 			}
 		case "RSA":
 			switch size {
 			case "256":
-				d.signMethod = jwt.SigningMethodRS256
+				d.JWT.signMethod = jwt.SigningMethodRS256
 			case "384":
-				d.signMethod = jwt.SigningMethodRS384
+				d.JWT.signMethod = jwt.SigningMethodRS384
 			case "512":
-				d.signMethod = jwt.SigningMethodRS512
+				d.JWT.signMethod = jwt.SigningMethodRS512
 			}
 		case "ECDSA":
 			switch size {
 			case "256":
-				d.signMethod = jwt.SigningMethodES256
+				d.JWT.signMethod = jwt.SigningMethodES256
 			case "384":
-				d.signMethod = jwt.SigningMethodES384
+				d.JWT.signMethod = jwt.SigningMethodES384
 			case "512":
-				d.signMethod = jwt.SigningMethodES512
+				d.JWT.signMethod = jwt.SigningMethodES512
 			}
 		case "RSA-PSS":
 			switch size {
 			case "256":
-				d.signMethod = jwt.SigningMethodPS256
+				d.JWT.signMethod = jwt.SigningMethodPS256
 			case "384":
-				d.signMethod = jwt.SigningMethodPS384
+				d.JWT.signMethod = jwt.SigningMethodPS384
 			case "512":
-				d.signMethod = jwt.SigningMethodPS512
+				d.JWT.signMethod = jwt.SigningMethodPS512
 			}
 		case "EdDSA":
-			d.signMethod = &jwt.SigningMethodEd25519{}
+			d.JWT.signMethod = &jwt.SigningMethodEd25519{}
 		}
+	}
+}
+
+// --- General ---
+
+func RegisterGeneralHasherFunc(alg string) Option {
+	return func(d *Doorkeeper) {
+		switch alg {
+		case "SHA1":
+			d.General.hasherFunc = sha1.New
+		case "SHA224":
+			d.General.hasherFunc = sha256.New224
+		case "SHA256":
+			d.General.hasherFunc = sha256.New
+		case "SHA384":
+			d.General.hasherFunc = sha512.New384
+		case "SHA512":
+			d.General.hasherFunc = sha512.New
+		case "SHA3_224":
+			d.General.hasherFunc = sha3.New224
+		case "SHA3_256":
+			d.General.hasherFunc = sha3.New256
+		case "SHA3_384":
+			d.General.hasherFunc = sha3.New384
+		case "SHA3_512":
+			d.General.hasherFunc = sha3.New512
+		}
+	}
+}
+
+func ShouldGenerateRandomPassword(b bool) Option {
+	return func(d *Doorkeeper) {
+		d.General.disableRandomGeneratedPassword = b
+	}
+}
+
+func RegisterDefaultGeneratedPassword(s string) Option {
+	return func(d *Doorkeeper) {
+		d.General.defaultGeneratedPassword = s
+	}
+}
+
+// --- Encryptor ---
+
+func RegisterEncryptorSecretKey(secret string) Option {
+	return func(d *Doorkeeper) {
+		sha := sha256.Sum256(utils.ConvertStringToByteSlice(secret))
+		d.Encryptor.secretKey = string(sha[:])
 	}
 }

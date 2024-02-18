@@ -127,14 +127,17 @@ func (a *app) Run(args []string) int {
 
 	// Doorkeeper .-.
 	dk := doorkeeper.GetDoorkeeper(
-		doorkeeper.RegisterHasherFunc(cfg.Doorkeeper.HashMethod()),
-		doorkeeper.RegisterSignMethod(cfg.Doorkeeper.SigningMethod(), cfg.Doorkeeper.SignSize()),
-		doorkeeper.RegisterIssuer(cfg.Doorkeeper.Issuer()),
-		doorkeeper.RegisterAccessDuration(cfg.Doorkeeper.AccessTokenDuration()),
-		doorkeeper.RegisterRefreshDuration(cfg.Doorkeeper.RefreshTokenDuration()),
-		doorkeeper.RegisterCertPath(cfg.Doorkeeper.CertPath()),
-		doorkeeper.RegisterSecretKey(cfg.Doorkeeper.SecretKey()),
-		doorkeeper.RegisterAdminKey(cfg.Doorkeeper.AdminKey()),
+		// JWT
+		doorkeeper.RegisterJWTIssuer(cfg.Doorkeeper.JWTIssuer()),
+		doorkeeper.RegisterJWTSignMethod(cfg.Doorkeeper.JWTSigningMethod(), cfg.Doorkeeper.JWTSignSize()),
+		doorkeeper.RegisterJWTPublicKey(cfg.Doorkeeper.JWTPublicKey()),
+		doorkeeper.RegisterJWTPrivateKey(cfg.Doorkeeper.JWTPrivateKey()),
+		doorkeeper.RegisterJWTRefreshDuration(cfg.Doorkeeper.JWTRefreshTokenDuration()),
+		doorkeeper.RegisterJWTAccessDuration(cfg.Doorkeeper.JWTAccessTokenDuration()),
+		// General
+		doorkeeper.RegisterGeneralHasherFunc(cfg.Doorkeeper.GeneralHashMethod()),
+		// Encryptor
+		doorkeeper.RegisterEncryptorSecretKey(cfg.Doorkeeper.EncryptorSecretKey()),
 	)
 
 	// Rate Limitter .-.
@@ -162,7 +165,7 @@ func (a *app) Run(args []string) int {
 	deliveree := a.newDeliveryEngine()
 
 	// Http
-	v1.NewRouter(deliveree, logger, usecaseComposer)
+	v1.NewRouter(deliveree, logger, usecaseComposer, serviceComposer)
 	httpserver.NewServer(deliveree,
 		httpserver.RegisterHostAndPort(cfg.Server.Host, cfg.Server.Port),
 		httpserver.StartSecure(a.flagSecure, a.flagServerCertPath, a.flagServerKeyPath),

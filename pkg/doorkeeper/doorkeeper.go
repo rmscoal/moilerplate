@@ -11,11 +11,9 @@
 package doorkeeper
 
 import (
-	"crypto"
 	"crypto/sha512"
 	"hash"
 	"log"
-	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -25,23 +23,30 @@ import (
 )
 
 type Doorkeeper struct {
-	// --- JWT ---
-	signMethod      jwt.SigningMethod // This will be used for JWS / JWE
-	certPath        string            // Stores the path to the certification keys
-	secretKey       string            // Stores the secret key for symmetric signing methods
-	privKey         interface{}       // Stores the private keys parsed from PEM (if asymmetric)
-	pubKey          interface{}       // Stores the public keys parsed from PEM (if symmetric)
-	issuer          string            // *Claims*
-	AccessDuration  time.Duration     // Duration of an access token
-	RefreshDuration time.Duration     // Duration of a refresh token
+	JWT       jwtDoorkeeper
+	General   generalDoorkeeper
+	Encryptor encryptorDoorkeeper
+}
 
-	// --- Password Hasher ---
-	hasherFunc func() hash.Hash // This will be used as the hashing method (may on top of PBKD2F)
-	hashKeyLen int              // Special case for PBKD2F key length
-	hashIter   int              // Special case for PBKD2F iterator
+type jwtDoorkeeper struct {
+	signMethod      jwt.SigningMethod
+	privateKey      any
+	publicKey       any
+	accessDuration  time.Duration
+	refreshDuration time.Duration
+	issuer          string
+}
 
-	// --- Admin ---
-	adminKey string // key for admins to access app documentation resources. The admin key will be hashed using sha256
+type generalDoorkeeper struct {
+	hasherFunc                     func() hash.Hash // This will be used as the hashing method (may on top of PBKD2F)
+	hashKeyLen                     int              // Special case for PBKD2F key length
+	hashIter                       int              // Special case for PBKD2F iterator
+	disableRandomGeneratedPassword bool             // Whether to randomly generate password or disable it and return constant string
+	defaultGeneratedPassword       string           // The default value if random generated password is disable
+}
+
+type encryptorDoorkeeper struct {
+	secretKey string
 }
 
 var (
@@ -53,12 +58,13 @@ var (
 )
 
 var (
-	_defaultHasherFunc      = sha512.New384
-	_defaultHashKeyLen      = 64
-	_defaultHashIter        = 4096
-	_defaultSigningMethod   = jwt.SigningMethodHS384
-	_defaultAccessDuration  = 15 * time.Minute
-	_defaultRefreshDuration = 1 * time.Hour
+	_defaultGeneratedPassword = "verystrongpassword"
+	_defaultHasherFunc        = sha512.New384
+	_defaultHashKeyLen        = 64
+	_defaultHashIter          = 4096
+	_defaultSigningMethod     = jwt.SigningMethodHS384
+	_defaultAccessDuration    = 15 * time.Minute
+	_defaultRefreshDuration   = 1 * time.Hour
 )
 
 var (
@@ -70,129 +76,125 @@ func GetDoorkeeper(opts ...Option) *Doorkeeper {
 	if doorkeeperSingleInstance == nil {
 		once.Do(func() {
 			doorkeeperSingleInstance = &Doorkeeper{
-				AccessDuration:  _defaultAccessDuration,
-				RefreshDuration: _defaultRefreshDuration,
-				hasherFunc:      _defaultHasherFunc,
-				hashKeyLen:      _defaultHashKeyLen,
-				hashIter:        _defaultHashIter,
-				signMethod:      _defaultSigningMethod,
+				JWT: jwtDoorkeeper{
+					accessDuration:  _defaultAccessDuration,
+					refreshDuration: _defaultRefreshDuration,
+					signMethod:      _defaultSigningMethod,
+				},
+
+				General: generalDoorkeeper{
+					hasherFunc:               _defaultHasherFunc,
+					hashKeyLen:               _defaultHashKeyLen,
+					hashIter:                 _defaultHashIter,
+					defaultGeneratedPassword: _defaultGeneratedPassword,
+				},
 			}
 
 			for _, opt := range opts {
 				opt(doorkeeperSingleInstance)
 			}
 
-			doorkeeperSingleInstance.loadSecretKeys()
+			doorkeeperSingleInstance.loadJWTSecretKeys()
 		})
 	}
 
 	return doorkeeperSingleInstance
 }
 
+// --- General ---
+
 func (d *Doorkeeper) GetHasherFunc() func() hash.Hash {
-	return d.hasherFunc
+	return d.General.hasherFunc
 }
 
 func (d *Doorkeeper) GetHashKeyLen() int {
-	return d.hashKeyLen
+	return d.General.hashKeyLen
 }
 
 func (d *Doorkeeper) GetHashIter() int {
-	return d.hashIter
+	return d.General.hashIter
 }
 
+// --- JWT ---
+
 func (d *Doorkeeper) GetIssuer() string {
-	return d.issuer
+	return d.JWT.issuer
 }
 
 func (d *Doorkeeper) GetSignMethod() jwt.SigningMethod {
-	return d.signMethod
+	return d.JWT.signMethod
 }
 
 func (d *Doorkeeper) GetPubKey() interface{} {
-	return d.pubKey
+	return d.JWT.publicKey
 }
 
 func (d *Doorkeeper) GetPrivKey() interface{} {
-	return d.privKey
+	return d.JWT.privateKey
+}
+
+func (d *Doorkeeper) GetJWTAccessDuration() time.Duration {
+	return d.JWT.accessDuration
+}
+
+func (d *Doorkeeper) GetJWTRefreshDuration() time.Duration {
+	return d.JWT.refreshDuration
 }
 
 func (d *Doorkeeper) GetConcreteSignMethod() reflect.Type {
-	return reflect.TypeOf(d.signMethod)
+	return reflect.TypeOf(d.JWT.signMethod)
 }
 
-func (d *Doorkeeper) GetAdminKey() string {
-	return d.adminKey
-}
+func (d *Doorkeeper) loadJWTSecretKeys() {
+	// If private key in still as string, convert it to []byte
+	switch d.JWT.privateKey.(type) {
+	case string:
+		d.JWT.privateKey = utils.ConvertStringToByteSlice(d.JWT.privateKey.(string))
+	}
 
-func (d *Doorkeeper) loadSecretKeys() {
+	// If public key in still as string, convert it to []byte
+	switch d.JWT.publicKey.(type) {
+	case string:
+		d.JWT.publicKey = utils.ConvertStringToByteSlice(d.JWT.publicKey.(string))
+	}
+
+	var err error
 	switch d.GetConcreteSignMethod() {
-	case HMAC_SIGN_METHOD_TYPE:
-		d.privKey = utils.ConvertStringToByteSlice(d.secretKey)
-		d.pubKey = d.privKey
-	case RSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_rsa")
-		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
-	case RSAPSS_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_rsa")
-		d.privKey, d.pubKey = d.parseRSAKeysFromPem(privKeyByte, pubKeyByte)
+	case RSA_SIGN_METHOD_TYPE, RSAPSS_SIGN_METHOD_TYPE:
+		d.JWT.privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(d.JWT.privateKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse RSA private key from given jwt private key: %s", err)
+		}
+
+		d.JWT.publicKey, err = jwt.ParseRSAPublicKeyFromPEM(d.JWT.publicKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse RSA public key from given jwt public key: %s", err)
+		}
 	case ECDSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_ecdsa")
-		d.privKey, d.pubKey = d.parseECKeysFromPem(privKeyByte, pubKeyByte)
+		d.JWT.privateKey, err = jwt.ParseECPrivateKeyFromPEM(d.JWT.privateKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse EC private key from given jwt private key: %s", err)
+		}
+
+		d.JWT.publicKey, err = jwt.ParseECPublicKeyFromPEM(d.JWT.publicKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse EC public key from given jwt public key: %s", err)
+		}
 	case EdDSA_SIGN_METHOD_TYPE:
-		privKeyByte, pubKeyByte := d.getAsymmetricKeysFromFile("id_ed2559")
-		d.privKey, d.pubKey = d.parseEdKeysFromPem(privKeyByte, pubKeyByte)
+		d.JWT.privateKey, err = jwt.ParseEdPrivateKeyFromPEM(d.JWT.privateKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse EdDSA private key from given jwt private key: %s", err)
+		}
+
+		d.JWT.publicKey, err = jwt.ParseEdPublicKeyFromPEM(d.JWT.publicKey.([]byte))
+		if err != nil {
+			log.Fatalf("unable to parse EdDSA public key from given jwt public key: %s", err)
+		}
 	}
 }
 
-func (d *Doorkeeper) getAsymmetricKeysFromFile(filename string) ([]byte, []byte) {
-	privKey, err := os.ReadFile(d.certPath + "/" + filename)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	pubKey, err := os.ReadFile(d.certPath + "/" + filename + ".pub")
-	if err != nil {
-		log.Fatalln(err)
-	}
+// --- Encryptor ---
 
-	return privKey, pubKey
-}
-
-func (d *Doorkeeper) parseECKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
-	privKey, err := jwt.ParseECPrivateKeyFromPEM(privByte)
-	if err != nil {
-		log.Fatalf("unable to parse ec private key: %s", err)
-	}
-	pubKey, err := jwt.ParseECPublicKeyFromPEM(pubByte)
-	if err != nil {
-		log.Fatalf("unable to parse ec public key: %s", err)
-	}
-
-	return privKey, pubKey
-}
-
-func (d *Doorkeeper) parseRSAKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
-	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privByte)
-	if err != nil {
-		log.Fatalf("unable to parse rsa private key: %s", err)
-	}
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubByte)
-	if err != nil {
-		log.Fatalf("unable to parse rsa public key: %s", err)
-	}
-
-	return privKey, pubKey
-}
-
-func (d *Doorkeeper) parseEdKeysFromPem(privByte, pubByte []byte) (crypto.PrivateKey, crypto.PublicKey) {
-	privKey, err := jwt.ParseEdPrivateKeyFromPEM(privByte)
-	if err != nil {
-		log.Fatalf("unable to parse ed private key: %s", err)
-	}
-	pubKey, err := jwt.ParseEdPublicKeyFromPEM(pubByte)
-	if err != nil {
-		log.Fatalf("unable to parse ed public key: %s", err)
-	}
-
-	return privKey, pubKey
+func (d *Doorkeeper) GetEncryptorSecretKey() string {
+	return d.Encryptor.secretKey
 }

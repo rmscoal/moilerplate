@@ -1,14 +1,11 @@
 package composer
 
 import (
-	"github.com/rmscoal/moilerplate/internal/app/service"
 	"github.com/rmscoal/moilerplate/internal/app/usecase"
 )
 
 type IUseCaseComposer interface {
 	CredentialUseCase() usecase.ICredentialUseCase
-	UserProfileUseCase() usecase.IUserProfileUseCase
-	RaterUseCase() service.IRaterService
 }
 
 type useCaseComposer struct {
@@ -22,12 +19,4 @@ func NewUseCaseComposer(repo IRepoComposer, service IServiceComposer) IUseCaseCo
 
 func (c *useCaseComposer) CredentialUseCase() usecase.ICredentialUseCase {
 	return usecase.NewCredentialUseCase(c.repo.CredentialRepo(), c.service.DoorkeeperService())
-}
-
-func (c *useCaseComposer) UserProfileUseCase() usecase.IUserProfileUseCase {
-	return usecase.NewUserProfileUseCase(c.repo.UserProfileRepo())
-}
-
-func (c *useCaseComposer) RaterUseCase() service.IRaterService {
-	return c.service.RaterService()
 }

@@ -2,18 +2,12 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"log"
-	"time"
 
 	"github.com/rmscoal/moilerplate/internal/app/repo"
 	"github.com/rmscoal/moilerplate/internal/app/service"
 	"github.com/rmscoal/moilerplate/internal/domain"
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
-	"github.com/rmscoal/moilerplate/internal/utils"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -27,260 +21,22 @@ func NewCredentialUseCase(repo repo.ICredentialRepo, service service.IDoorkeeper
 	return &credentialUseCase{repo: repo, service: service, tracer: otel.Tracer("credential_usecase")}
 }
 
-/*
-********************
-Admin Section
-
-Description: As of now admin sections is used to access resource only for developers
-like the swagger documentation.
-********************
-*/
-
-func (uc *credentialUseCase) AdminLogin(ctx context.Context, adminKey string) (vo.AdminSession, error) {
-	adminSession := vo.AdminSession{
-		// Set the expiry session to 1 hour
-		Expiry: time.Now().Add(1 * time.Hour),
-	}
-
-	if err := uc.service.VerifyAdminKey(adminKey); err != nil {
-		return adminSession, NewUnauthorizedError(err)
-	}
-
-	expiry := utils.ConvertStringToByteSlice(adminSession.Expiry.Format(time.RFC1123))
-	session, err := uc.service.GenerateSession(expiry)
-	if err != nil {
-		return adminSession, NewServiceError("Admin", err)
-	}
-
-	adminSession.Session = session
-	return adminSession, nil
-}
-
-func (uc *credentialUseCase) AuthenticateAdmin(ctx context.Context, session string) error {
-	payload, err := uc.service.ParseSession(session)
-	if err != nil {
-		return NewUnauthorizedError(err)
-	}
-
-	expiry, err := time.Parse(time.RFC1123, string(payload))
-	if err != nil {
-		return NewUnauthorizedError(errors.New("invalid session payload"))
-	}
-
-	if time.Now().After(expiry) {
-		return NewUnauthorizedError(errors.New("session timedout"))
-	}
-
-	return nil
-}
-
-/*
-********************
-User Section
-
-Description: Holds logic for the general usecase of users of the application
-********************
-*/
-
+// Login handle user signin for first time user and generate pair of a jwts
 func (uc *credentialUseCase) SignUp(ctx context.Context, user domain.User) (domain.User, error) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).SignUp")
-	defer span.End()
-
-	// Validate user entity
-	if err := user.Validate(); err != nil {
-		return user, NewDomainError("User", err)
-	}
-
-	mixture, err := uc.service.HashPassword(user.Credential.Password)
-	if err != nil {
-		span.SetStatus(codes.Error, "error while hashing password")
-		span.RecordError(err)
-		return user, NewServiceError("User", err)
-	}
-	user.Credential.SetEncodedPasswordFromByte(mixture)
-
-	user, err = uc.repo.CreateNewUser(ctx, user)
-	if err != nil {
-		return user, NewConflictError("User", err)
-	}
-
-	user, err = uc.prepareUserTokensGeneration(ctx, user)
-	if err != nil {
-		return user, err
-	}
-
-	return user, nil
+	panic("not implemented") // TODO: Implement
 }
 
+// Login handle user login and generate pair of jwts
 func (uc *credentialUseCase) Login(ctx context.Context, cred vo.UserCredential) (domain.User, error) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Login")
-	defer span.End()
-
-	var user domain.User
-
-	// Validate request
-	if err := cred.Validate(); err != nil {
-		span.SetStatus(codes.Error, "error domain validation")
-		span.RecordError(err)
-		return user, NewDomainError("Credentials", err)
-	}
-
-	// Retrieve the user by its username
-	user, err := uc.repo.GetUserByUsername(ctx, cred.Username)
-	if err != nil {
-		return user, NewNotFoundError("Credentials", err)
-	}
-
-	// Decode user's mixture
-	mixture, err := user.Credential.GetHashMixture()
-	if err != nil {
-		span.SetStatus(codes.Error, "error getting hash mixture")
-		span.RecordError(err)
-		return user, NewDomainError("Credentials", utils.AddError(fmt.Errorf("unable to retrieve user's hash"), err))
-	}
-
-	// Compare password request with users hashed password
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
-	defer cancel()
-	success, err := uc.service.CompareHashAndPassword(ctxWithTimeout, cred.Password, mixture)
-	if err != nil || !success {
-		span.RecordError(err)
-		return user, NewUnauthorizedError(utils.AddError(fmt.Errorf("the password does not match"), err))
-	}
-
-	user, err = uc.prepareUserTokensGeneration(ctx, user)
-	if err != nil {
-		return user, err
-	}
-
-	go uc.generateNewHashMixture(trace.ContextWithSpan(context.Background(), span), user.Id, cred.Password)
-
-	span.AddEvent("login finished processing")
-	return user, nil
+	panic("not implemented") // TODO: Implement
 }
 
+// Authenticates authenticates user from the given jwt.
 func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
-	id, err := uc.service.VerifyAndParseToken(ctx, token)
-	if err != nil {
-		return domain.User{}, NewUnauthorizedError(err)
-	}
-
-	return domain.User{Id: id}, nil
+	panic("not implemented") // TODO: Implement
 }
 
 // Refresh validates refresh tokens and generates a new set of tokens.
-// Below are the steps:
-//  1. Verify and parse incoming refresh token to retrieve the jti (JWT ID).
-//  2. Checks whether the jti is present in the repository.
-//     a. Case not exists: throw unauthorized error
-//  3. Validate the jti:
-//     a. Case it fails (reuse of refresh token... meaning a stolen one), then invalidates
-//     all the refresh tokens families.
-//
-// 4. Generate a new version record on the repo
-// 5. Generate the tokens
-// See: https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/
-func (uc *credentialUseCase) Refresh(ctx context.Context, refreshToken string) (domain.User, error) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).Refresh")
-	defer span.End()
-
-	jti, err := uc.service.VerifyAndParseRefreshToken(ctx, refreshToken)
-	if err != nil {
-		return domain.User{}, NewUnauthorizedError(err)
-	}
-
-	user, err := uc.repo.GetUserByJti(ctx, jti)
-	if err != nil {
-		return domain.User{}, NewUnauthorizedErrorWithReport(err)
-	}
-
-	if err := uc.validateUserToken(ctx, user); err != nil {
-		return domain.User{}, err // usecase error
-	}
-
-	user, err = uc.prepareUserTokensGeneration(ctx, user)
-	if err != nil {
-		return user, err // usecase error
-	}
-
-	return user, nil
-}
-
-func (uc *credentialUseCase) prepareUserTokensGeneration(ctx context.Context, user domain.User) (domain.User, error) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).prepareUserTokensGeneration")
-	defer span.End()
-
-	token, err := uc.repo.SetNewUserToken(ctx, user)
-	if err != nil {
-		span.SetStatus(codes.Error, "error")
-		span.RecordError(err, trace.WithStackTrace(true))
-		return domain.User{}, NewRepositoryError("Credentials", err)
-	}
-
-	user.Credential.Tokens = token
-	token, err = uc.service.GenerateUserTokens(user)
-	if err != nil {
-		if rErr := uc.repo.UndoSetUserToken(ctx, user.Credential.Tokens.TokenID); rErr != nil {
-			err = utils.AddError(err, rErr)
-		}
-		span.SetStatus(codes.Error, "error")
-		span.RecordError(err, trace.WithStackTrace(true))
-		return domain.User{}, NewServiceError("Credentials", err)
-	}
-
-	user.Credential.Tokens = token
-	return user, nil
-}
-
-func (uc *credentialUseCase) validateUserToken(ctx context.Context, user domain.User) error {
-	version, err := uc.repo.GetLatestUserTokenVersion(ctx, user)
-	if err != nil {
-		return NewRepositoryError("Credentials", err)
-	}
-
-	if user.Credential.Tokens.Issued || user.Credential.Tokens.Version < version {
-		err := fmt.Errorf("jti was issued before")
-		rErr := uc.lockDownUser(ctx, user)
-		if rErr != nil {
-			err = utils.AddError(err, rErr)
-		}
-		return NewUnauthorizedError(err)
-	}
-
-	return nil
-}
-
-// lockDownUser locks down user by deleting the token family such that existing
-// tokens are invalidated.
-func (uc *credentialUseCase) lockDownUser(ctx context.Context, user domain.User) error {
-	if err := uc.repo.DeleteUserTokenFamily(ctx, user); err != nil {
-		return NewRepositoryError("Credentials", err)
-	}
-	return nil
-}
-
-// generateNewHashMixture method creates a new hash
-// mixture from user's password. Set this up with
-// goroutine after signin in.
-func (uc *credentialUseCase) generateNewHashMixture(ctx context.Context, id, password string) {
-	ctx, span := uc.tracer.Start(ctx, "(*credentialUseCase).generateNewHashMixture")
-	defer span.End()
-	span.AddEvent("generating hash mixture asynchronously")
-
-	user := domain.User{Id: id, Credential: vo.UserCredential{Password: password}}
-
-	mixture, err := uc.service.HashPassword(user.Credential.Password)
-	if err != nil {
-		log.Printf("failed to generate new hash password for user id: %s", id)
-	}
-	user.Credential.SetEncodedPasswordFromByte(mixture)
-
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-	defer cancel()
-
-	if err := uc.repo.RotateUserHashPassword(ctx, user); err != nil {
-		span.SetStatus(codes.Error, "error generate new hash mixture")
-		span.RecordError(err, trace.WithStackTrace(true))
-		log.Printf("failed to save user hash rotation for user id: %s", id)
-	}
+func (uc *credentialUseCase) Refresh(ctx context.Context, token string) (domain.User, error) {
+	panic("not implemented") // TODO: Implement
 }

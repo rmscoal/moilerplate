@@ -7,3 +7,7 @@ import "unsafe"
 func ConvertStringToByteSlice(s string) []byte {
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
+
+func NewStringPointer(s string) *string {
+	return &s
+}

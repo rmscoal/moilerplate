@@ -13,7 +13,7 @@ import (
 //go:embed web/*
 var web embed.FS
 
-func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer) {
+func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUseCaseComposer, svcComposer composer.IServiceComposer) {
 	r.Use(middleware.NewMiddleware().MetricsMiddleware())
 	r.Use(middleware.NewMiddleware().TraceMiddleware())
 	r.Use(middleware.LogRequestMiddleware(logger))
@@ -26,14 +26,5 @@ func NewRouter(r *gin.Engine, logger *logger.AppLogger, ucComposer composer.IUse
 	v1 := r.Group("/api/v1")
 
 	// Credentials controller
-	NewCredentialController(v1, ucComposer.CredentialUseCase(), ucComposer.RaterUseCase())
-	// Admin controller
-	NewAdminController(v1, ucComposer.CredentialUseCase())
-
-	// Protected endpoint
-	ptd := v1.Group("/ptd")
-	// Authenticate middleware - For all protected endpoint
-	ptd.Use(middleware.NewMiddleware().AuthMiddleware(ucComposer.CredentialUseCase()))
-	// Profile controller
-	NewUserProfileController(ptd, ucComposer.UserProfileUseCase())
+	NewCredentialController(v1, ucComposer.CredentialUseCase(), svcComposer.RaterService())
 }
