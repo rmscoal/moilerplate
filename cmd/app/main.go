@@ -1,16 +1,17 @@
-package app
+package main
 
 import (
 	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/joho/godotenv"
+	"github.com/mitchellh/cli"
 	"github.com/rmscoal/moilerplate/config"
-	"github.com/rmscoal/moilerplate/docs"
 	"github.com/rmscoal/moilerplate/internal/composer"
 	v1 "github.com/rmscoal/moilerplate/internal/delivery/v1"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
@@ -19,6 +20,7 @@ import (
 	"github.com/rmscoal/moilerplate/pkg/observability"
 	"github.com/rmscoal/moilerplate/pkg/postgres"
 	"github.com/rmscoal/moilerplate/pkg/rater"
+	"github.com/rmscoal/moilerplate/swagger"
 )
 
 type app struct {
@@ -54,7 +56,28 @@ func (a *app) Help() string {
 	`
 }
 
-func (a *app) Flags() *flag.FlagSet {
+func main() {
+	cli := cli.NewCLI("moilerplate", "1.0.0")
+	cli.Commands = commands()
+	cli.Args = os.Args[1:]
+
+	exitCode, err := cli.Run()
+	if err != nil {
+		log.Fatalf("unable to run app")
+	}
+
+	os.Exit(exitCode)
+}
+
+func commands() map[string]cli.CommandFactory {
+	return map[string]cli.CommandFactory{
+		"server": func() (cli.Command, error) {
+			return NewAppCLI(), nil
+		},
+	}
+}
+
+func (a *app) flags() *flag.FlagSet {
 	f := flag.NewFlagSet("server", flag.ExitOnError)
 
 	f.BoolVar(&a.flagSecure, "with-secure", false, "with-secure will start the server in https with CA cert required")
@@ -67,7 +90,7 @@ func (a *app) Flags() *flag.FlagSet {
 }
 
 func (a *app) Run(args []string) int {
-	f := a.Flags()
+	f := a.flags()
 	if err := f.Parse(args); err != nil {
 		log.Println("Parsing flag error", err)
 		return 1
@@ -82,12 +105,12 @@ func (a *app) Run(args []string) int {
 	}
 
 	// Swagger documentation info
-	docs.SwaggerInfo.Title = "Moilerplate"
-	docs.SwaggerInfo.Description = "A monolithic RESTful API for Go"
-	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "localhost:8082"
-	docs.SwaggerInfo.BasePath = "/api/v1"
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	swagger.SwaggerInfo.Title = "Moilerplate"
+	swagger.SwaggerInfo.Description = "A monolithic RESTful API for Go"
+	swagger.SwaggerInfo.Version = "1.0"
+	swagger.SwaggerInfo.Host = "localhost:8082"
+	swagger.SwaggerInfo.BasePath = "/api/v1"
+	swagger.SwaggerInfo.Schemes = []string{"http", "https"}
 
 	cfg := config.GetConfig()
 
