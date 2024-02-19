@@ -1,6 +1,8 @@
 package composer
 
 import (
+	"database/sql"
+
 	impl "github.com/rmscoal/moilerplate/internal/adapter/service"
 	"github.com/rmscoal/moilerplate/internal/app/service"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
@@ -13,16 +15,17 @@ type IServiceComposer interface {
 }
 
 type serviceComposer struct {
+	db *sql.DB
 	dk *doorkeeper.Doorkeeper
 	rt *rater.Rater
 }
 
-func NewServiceComposer(dk *doorkeeper.Doorkeeper, rt *rater.Rater) IServiceComposer {
+func NewServiceComposer(dk *doorkeeper.Doorkeeper, rt *rater.Rater, db *sql.DB) IServiceComposer {
 	return &serviceComposer{dk: dk, rt: rt}
 }
 
 func (s *serviceComposer) DoorkeeperService() service.IDoorkeeperService {
-	return impl.NewDoorkeeperService(s.dk)
+	return impl.NewDoorkeeperService(s.dk, s.db)
 }
 
 func (s *serviceComposer) RaterService() service.IRaterService {

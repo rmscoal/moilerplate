@@ -46,7 +46,7 @@ Controllers
 //	@Tags			Credentials
 //	@Accept			json
 //	@Produce		json
-//	@Param			signUpRequest	body		dto.SignUpRequest					true	"Signup request body"
+//	@Param			signUpRequest	body		dto.SignUpRequest	true	"Signup request body"
 //	@Success		200				{object}	model.Data{data=dto.SignUpResponse}
 //	@Failure		409				{object}	model.Error{error=usecase.AppError}
 //	@Failure		422				{object}	model.Error{error=usecase.AppError}

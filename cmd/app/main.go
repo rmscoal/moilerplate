@@ -154,7 +154,7 @@ func (a *app) Run(args []string) int {
 	)
 
 	// Composers .-.
-	serviceComposer := composer.NewServiceComposer(dk, rt)
+	serviceComposer := composer.NewServiceComposer(dk, rt, pg.Pool)
 	repoComposer := composer.NewRepoComposer(pg)
 	usecaseComposer := composer.NewUseCaseComposer(repoComposer, serviceComposer)
 

@@ -6,6 +6,7 @@ import (
 	impl "github.com/rmscoal/moilerplate/internal/adapter/repo"
 	"github.com/rmscoal/moilerplate/internal/app/repo"
 	"github.com/rmscoal/moilerplate/internal/domain"
+	"github.com/rmscoal/moilerplate/internal/domain/vo"
 	"github.com/rmscoal/moilerplate/pkg/postgres"
 	"gorm.io/plugin/opentelemetry/tracing"
 )
@@ -41,6 +42,7 @@ func (c *repoComposer) CredentialRepo() repo.ICredentialRepo {
 func (c *repoComposer) Migrate() {
 	if err := c.db.ORM.AutoMigrate(
 		domain.User{},
+		vo.AccessVersioning{},
 	); err != nil {
 		log.Fatalf("FATAL - Unable to automigrate models: %s", err)
 	}
