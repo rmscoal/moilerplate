@@ -15,5 +15,5 @@ type ICredentialUseCase interface {
 	// Authenticates authenticates user from the given jwt.
 	Authenticate(ctx context.Context, token string) (domain.User, error)
 	// Refresh validates refresh tokens and generates a new set of tokens.
-	Refresh(ctx context.Context, token string) (domain.User, error)
+	Refresh(ctx context.Context, token string) (vo.Token, error)
 }

@@ -72,6 +72,11 @@ func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (do
 	panic("not implemented") // TODO: Implement
 }
 
-func (uc *credentialUseCase) Refresh(ctx context.Context, token string) (domain.User, error) {
-	panic("not implemented") // TODO: Implement
+func (uc *credentialUseCase) Refresh(ctx context.Context, rt string) (vo.Token, error) {
+	token, err := uc.service.ValidateRefreshToken(ctx, rt)
+	if err != nil {
+		return token, NewUnauthorizedError(err)
+	}
+
+	return token, nil
 }
