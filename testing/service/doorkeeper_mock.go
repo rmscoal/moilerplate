@@ -26,6 +26,11 @@ func (service *DoorkeeperServiceMock) GenerateTokens(ctx context.Context, subjec
 	return args.Get(0).(vo.Token), args.Error(1)
 }
 
+func (service *DoorkeeperServiceMock) ValidateAccessToken(ctx context.Context, at string) (string, error) {
+	args := service.Called(ctx, at)
+	return args.String(0), args.Error(1)
+}
+
 func (service *DoorkeeperServiceMock) ValidateRefreshToken(ctx context.Context, rt string) (vo.Token, error) {
 	args := service.Called(ctx, rt)
 	return args.Get(0).(vo.Token), args.Error(1)

@@ -34,6 +34,22 @@ func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username stri
 
 	var user domain.User
 	if err := repo.db.WithContext(ctx).Take(&user, "username = ?", username).Error; err != nil {
+		span.SetStatus(codes.Error, "unable to query user")
+		span.RecordError(err)
+		return user, repo.DetectNotFoundError(err)
+	}
+
+	return user, nil
+}
+
+func (repo *credentialRepo) GetUserByID(ctx context.Context, id string) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "repo.GetUserByID")
+	defer span.End()
+
+	var user domain.User
+	if err := repo.db.WithContext(ctx).Take(&user, "id = ?", id).Error; err != nil {
+		span.SetStatus(codes.Error, "unable to query user")
+		span.RecordError(err)
 		return user, repo.DetectNotFoundError(err)
 	}
 

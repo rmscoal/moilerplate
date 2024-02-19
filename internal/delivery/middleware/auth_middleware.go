@@ -26,7 +26,7 @@ func (m *Middleware) AuthMiddleware(uc usecase.ICredentialUseCase) gin.HandlerFu
 			return
 		}
 
-		m.addToContext(c, "userId", user.ID)
+		m.addToContext(c, usecase.CurrentUser, user)
 		c.Next()
 	}
 }

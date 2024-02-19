@@ -223,3 +223,60 @@ func (suite *credentialUseCaseTestSuite) TestLogin_Fail_GenerateTokens() {
 	assert.ErrorContains(suite.T(), err, ErrUnexpected.Error())
 	assert.Empty(suite.T(), token)
 }
+
+func (suite *credentialUseCaseTestSuite) TestRefreshAccess_Success() {
+	ctx := context.Background()
+	token := "some_token"
+
+	suite.dkSvc.On("ValidateRefreshToken", ctx, token).Return(vo.Token{AccessToken: token, RefreshToken: token}, nil)
+
+	tk, err := suite.uc.Refresh(ctx, token)
+	assert.Nil(suite.T(), err)
+	assert.NotEmpty(suite.T(), tk)
+}
+
+func (suite *credentialUseCaseTestSuite) TestRefreshAccess_Fail() {
+	ctx := context.Background()
+	token := "some_token"
+
+	suite.dkSvc.On("ValidateRefreshToken", ctx, token).Return(vo.Token{}, errors.New("some error"))
+
+	tk, err := suite.uc.Refresh(ctx, token)
+	assert.ErrorContains(suite.T(), err, ErrUnauthorized.Error())
+	assert.Empty(suite.T(), tk)
+}
+
+func (suite *credentialUseCaseTestSuite) TestAuthenticate_Success() {
+	ctx := context.Background()
+	token := "some_token"
+
+	suite.dkSvc.On("ValidateAccessToken", ctx, token).Return("user_id", nil)
+	suite.credRepo.On("GetUserByID", ctx, "user_id").Return(domain.User{BaseID: domain.BaseID{ID: "user_id"}}, nil)
+
+	user, err := suite.uc.Authenticate(ctx, token)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), user.ID, "user_id")
+}
+
+func (suite *credentialUseCaseTestSuite) TestAuthenticate_Fail_ValidateAccessToken() {
+	ctx := context.Background()
+	token := "some_token"
+
+	suite.dkSvc.On("ValidateAccessToken", ctx, token).Return("", errors.New("some error"))
+
+	user, err := suite.uc.Authenticate(ctx, token)
+	assert.ErrorContains(suite.T(), err, ErrUnauthorized.Error())
+	assert.Empty(suite.T(), user)
+}
+
+func (suite *credentialUseCaseTestSuite) TestAuthenticate_Fail_GetUserByID() {
+	ctx := context.Background()
+	token := "some_token"
+
+	suite.dkSvc.On("ValidateAccessToken", ctx, token).Return("user_id", nil)
+	suite.credRepo.On("GetUserByID", ctx, "user_id").Return(domain.User{}, ErrUnexpected)
+
+	user, err := suite.uc.Authenticate(ctx, token)
+	assert.ErrorContains(suite.T(), err, ErrUnexpected.Error())
+	assert.Empty(suite.T(), user)
+}

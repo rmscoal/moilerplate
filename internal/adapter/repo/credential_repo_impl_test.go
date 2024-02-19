@@ -116,3 +116,28 @@ func (suite *credentialRepoTestSuite) TestGetUserByUsername_Fail_NotFound() {
 	assert.ErrorContains(suite.T(), err, "not found")
 	assert.Empty(suite.T(), user)
 }
+
+func (suite *credentialRepoTestSuite) TestGetUserByID_Success() {
+	suite.mock.ExpectQuery(`SELECT (.+) FROM "users" WHERE id (.+)`).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow("id", "username"))
+
+	user, err := suite.repo.GetUserByID(suite.ctx, "username")
+	assert.Nil(suite.T(), err)
+	assert.NotEmpty(suite.T(), user)
+}
+
+func (suite *credentialRepoTestSuite) TestGetUserByID_Fail_ConnDone() {
+	suite.mock.ExpectQuery(`SELECT (.+) FROM "users" WHERE id (.+)`).WillReturnError(sql.ErrConnDone)
+
+	user, err := suite.repo.GetUserByID(suite.ctx, "username")
+	assert.Error(suite.T(), err)
+	assert.Empty(suite.T(), user)
+}
+
+func (suite *credentialRepoTestSuite) TestGetUserByID_Fail_NotFound() {
+	suite.mock.ExpectQuery(`SELECT (.+) FROM "users" WHERE id (.+)`).WillReturnRows(sqlmock.NewRows([]string{"id", "username"}))
+
+	user, err := suite.repo.GetUserByID(suite.ctx, "username")
+	assert.ErrorContains(suite.T(), err, "not found")
+	assert.Empty(suite.T(), user)
+}

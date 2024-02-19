@@ -68,8 +68,18 @@ func (uc *credentialUseCase) Login(ctx context.Context, cred domain.User) (token
 	return
 }
 
-func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (domain.User, error) {
-	panic("not implemented") // TODO: Implement
+func (uc *credentialUseCase) Authenticate(ctx context.Context, token string) (user domain.User, err error) {
+	userID, err := uc.service.ValidateAccessToken(ctx, token)
+	if err != nil {
+		return user, NewUnauthorizedError(err)
+	}
+
+	user, err = uc.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return user, NewRepositoryError("Credential", err)
+	}
+
+	return
 }
 
 func (uc *credentialUseCase) Refresh(ctx context.Context, rt string) (vo.Token, error) {

@@ -41,7 +41,7 @@ func NewMiddleware() *Middleware {
 	return middlewareSingleton
 }
 
-func (m *Middleware) addToContext(c *gin.Context, key string, value any) {
+func (m *Middleware) addToContext(c *gin.Context, key, value any) {
 	// Passing value by context is the best practice.
 	// Pass value to context code:
 	//

@@ -118,7 +118,7 @@ func (service *doorkeeperService) GenerateTokens(ctx context.Context, subject st
 	}
 
 	var args []any
-	query := `INSERT INTO access_versionings (jti, parent_id, user_id, version)`
+	query := `INSERT INTO access_versionings (jti, parent_id, user_id, version) `
 	if prevJTI != nil {
 		query += `VALUES ($1, $2, $3, (SELECT access_versionings.version + 1 FROM access_versionings WHERE jti = $2))`
 		args = []any{jti, *prevJTI, subject}

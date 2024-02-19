@@ -84,7 +84,7 @@ func (suite *DoorkeeperServiceTestSuite) TestComparePasswords_Fail_Mismatch() {
 
 func (suite *DoorkeeperServiceTestSuite) TestGenerateTokens_Success() {
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").
-		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), "prevJTI", "subject")
+		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "subject", 1)
 
 	token, err := suite.service.GenerateTokens(suite.ctx, "subject", nil)
 	assert.Nil(suite.T(), err)
@@ -127,7 +127,7 @@ func (suite *DoorkeeperServiceTestSuite) TestValidateAccessToken_Fail_Parse() {
 func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Success() {
 	// Mock for generate access token
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").
-		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "user_id")
+		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "user_id", 1)
 
 	// Mock for test
 	suite.mock.ExpectQuery("SELECT av1.user_id FROM access_versionings av1 WHERE (.+)").
@@ -154,7 +154,7 @@ func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Fail_Parse() {
 func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Fail_QueryRow() {
 	// Mock for generate access token
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").
-		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "user_id")
+		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "user_id", 1)
 
 	suite.mock.ExpectQuery("SELECT av1.user_id FROM access_versionings av1 WHERE (.+)").WillReturnError(sql.ErrNoRows)
 
