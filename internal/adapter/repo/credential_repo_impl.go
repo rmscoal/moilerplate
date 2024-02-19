@@ -27,3 +27,15 @@ func (repo *credentialRepo) CreateUser(ctx context.Context, user domain.User) (d
 
 	return user, nil
 }
+
+func (repo *credentialRepo) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	ctx, span := repo.tracer.Start(ctx, "repo.GetUserByUsername")
+	defer span.End()
+
+	var user domain.User
+	if err := repo.db.WithContext(ctx).Take(&user, "username = ?", username).Error; err != nil {
+		return user, repo.DetectNotFoundError(err)
+	}
+
+	return user, nil
+}

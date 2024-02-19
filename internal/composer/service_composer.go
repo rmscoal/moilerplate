@@ -21,7 +21,7 @@ type serviceComposer struct {
 }
 
 func NewServiceComposer(dk *doorkeeper.Doorkeeper, rt *rater.Rater, db *sql.DB) IServiceComposer {
-	return &serviceComposer{dk: dk, rt: rt}
+	return &serviceComposer{dk: dk, rt: rt, db: db}
 }
 
 func (s *serviceComposer) DoorkeeperService() service.IDoorkeeperService {

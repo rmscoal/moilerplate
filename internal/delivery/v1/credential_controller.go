@@ -66,10 +66,24 @@ func (controller *CredentialController) signupHandler(c *gin.Context) {
 		return
 	}
 
-	controller.Ok(c, mapper.Credential.UserDomainToSignUpResponse(user))
+	controller.Created(c, mapper.Credential.UserDomainToSignUpResponse(user))
 }
 
 func (controller *CredentialController) loginHandler(c *gin.Context) {
+	var req dto.LoginRequest
+
+	if err := c.ShouldBindBodyWith(&req, binding.JSON); err != nil {
+		controller.ClientError(c, usecase.NewClientError("Body", err))
+		return
+	}
+
+	token, err := controller.uc.Login(c.Request.Context(), mapper.Credential.LoginRequestToUserDomain(req))
+	if err != nil {
+		controller.SummariesUseCaseError(c, err)
+		return
+	}
+
+	controller.Ok(c, token)
 }
 
 func (controller *CredentialController) refreshHandler(c *gin.Context) {

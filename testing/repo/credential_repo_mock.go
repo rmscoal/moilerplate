@@ -16,3 +16,8 @@ func (repo *CredentialRepoMock) CreateUser(ctx context.Context, user domain.User
 	args := repo.Called(ctx, user)
 	return args.Get(0).(domain.User), args.Error(1)
 }
+
+func (repo *CredentialRepoMock) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
+	args := repo.Called(ctx, username)
+	return args.Get(0).(domain.User), args.Error(1)
+}

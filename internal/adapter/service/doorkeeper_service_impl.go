@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/sha1"
+	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/rmscoal/moilerplate/internal/domain/vo"
+	"github.com/rmscoal/moilerplate/internal/utils"
 	"github.com/rmscoal/moilerplate/pkg/doorkeeper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
@@ -46,6 +48,28 @@ func (service *doorkeeperService) HashAndEncodeStringWithSalt(ctx context.Contex
 	)
 }
 
+func (service *doorkeeperService) ComparePasswords(ctx context.Context, hashAndEncodedPass, passToCheck, slt string) (match bool, err error) {
+	_, span := service.tracer.Start(ctx, "service.ComparePasswords")
+	defer span.End()
+
+	hashedPassword, err := base64.StdEncoding.DecodeString(hashAndEncodedPass)
+	if err != nil {
+		return match, err
+	}
+
+	salt := sha1.Sum([]byte(slt))
+
+	comparison := pbkdf2.Key(
+		utils.ConvertStringToByteSlice(passToCheck),
+		salt[:],
+		service.dk.GetHashIter(),
+		service.dk.GetHashKeyLen(),
+		service.dk.GetHasherFunc(),
+	)
+
+	return subtle.ConstantTimeCompare(hashedPassword, comparison) == 1, nil
+}
+
 /*
 ---------- JWT Section ----------
 */
@@ -67,54 +91,44 @@ func (service *doorkeeperService) GenerateTokens(ctx context.Context, subject st
 	defer span.End()
 
 	var token vo.Token
+	var jti string = uuid.NewString()
 
-	accessTokenClaims := jwt.MapClaims{
+	accessToken, err := jwt.NewWithClaims(service.dk.GetSignMethod(), jwt.MapClaims{
 		"iss": service.dk.GetIssuer(),
 		"iat": time.Now().Unix(),
 		"sub": subject,
 		"exp": time.Now().Add(service.dk.GetJWTAccessDuration()).Unix(),
-	}
-
-	refreshTokenClaims := jwt.MapClaims{
-		"iss": service.dk.GetIssuer(),
-		"iat": time.Now().Unix(),
-		"jti": uuid.NewString(),
-		"exp": time.Now().Add(service.dk.GetJWTRefreshDuration()).Unix(),
-	}
-
-	accessToken, err := jwt.NewWithClaims(service.dk.GetSignMethod(), accessTokenClaims).SignedString(service.dk.GetPrivKey())
+	}).SignedString(service.dk.GetPrivKey())
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to create access token")
 		span.RecordError(err)
 		return token, err
 	}
 
-	refreshToken, err := jwt.NewWithClaims(service.dk.GetSignMethod(), refreshTokenClaims).SignedString(service.dk.GetPrivKey())
+	refreshToken, err := jwt.NewWithClaims(service.dk.GetSignMethod(), jwt.MapClaims{
+		"iss": service.dk.GetIssuer(),
+		"iat": time.Now().Unix(),
+		"jti": jti,
+		"exp": time.Now().Add(service.dk.GetJWTRefreshDuration()).Unix(),
+	}).SignedString(service.dk.GetPrivKey())
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to create refresh token")
 		span.RecordError(err)
 		return token, err
 	}
 
-	query := `
-		INSERT INTO access_versionings (jti, parent_id, user_id, version) 
-		VALUES (
-			$1, $2, $3, (
-			SELECT
-				CASE $2 = '' OR $2 IS NULL
-					WHEN TRUE THEN 1
-					ELSE
-						CASE (SELECT COUNT(*) FROM access_versionings WHERE jti = $2)
-							WHEN 0 THEN 1
-							ELSE (SELECT access_versionings.version + 1 FROM access_versionings WHERE jti = $2)
-						END
-				END AS version
-			)
-		)
-	`
+	var args []any
+	query := `INSERT INTO access_versionings (jti, parent_id, user_id, version)`
+	if prevJTI != nil {
+		query += `VALUES ($1, $2, $3, (SELECT access_versionings.version + 1 FROM access_versionings WHERE jti = $2))`
+		args = []any{jti, *prevJTI, subject}
+	} else {
+		query += `VALUES ($1, $2, $3, $4)`
+		args = []any{jti, nil, subject, 1}
+	}
 
 	span.SetAttributes(semconv.DBSystemPostgreSQL, semconv.DBStatementKey.String(query))
-	if _, err = service.db.ExecContext(ctx, query, refreshTokenClaims["jti"], prevJTI, subject); err != nil {
+	if _, err = service.db.ExecContext(ctx, query, args...); err != nil {
 		span.SetStatus(codes.Error, "failed to create refresh token")
 		span.RecordError(err)
 		return token, err

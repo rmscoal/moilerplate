@@ -12,6 +12,6 @@ type AccessVersioning struct {
 }
 
 type Token struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken  string `json:"accessToken,omitempty"`
+	RefreshToken string `json:"refreshToken,omitempty"`
 }

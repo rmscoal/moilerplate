@@ -17,10 +17,11 @@ import (
 
 type DoorkeeperServiceTestSuite struct {
 	suite.Suite
-	dk   *doorkeeper.Doorkeeper
-	db   *sql.DB
-	mock sqlmock.Sqlmock
-	ctx  context.Context
+	service *doorkeeperService
+	dk      *doorkeeper.Doorkeeper
+	db      *sql.DB
+	mock    sqlmock.Sqlmock
+	ctx     context.Context
 }
 
 func TestDoorkeeperService(t *testing.T) {
@@ -53,39 +54,50 @@ func (suite *DoorkeeperServiceTestSuite) SetupSuite() {
 	suite.db = db
 	suite.mock = mock
 	suite.ctx = context.Background()
+	suite.service = NewDoorkeeperService(suite.dk, suite.db)
 }
 
 func (suite *DoorkeeperServiceTestSuite) SetupTest() {}
 
 func (suite *DoorkeeperServiceTestSuite) TestHashAndEncodeStringWithSalt_Success() {
-	service := NewDoorkeeperService(suite.dk, suite.db)
-
-	result := service.HashAndEncodeStringWithSalt(context.Background(), "password", "salt")
+	result := suite.service.HashAndEncodeStringWithSalt(context.Background(), "password", "salt")
 	assert.NotEmpty(suite.T(), result)
+}
+
+func (suite *DoorkeeperServiceTestSuite) TestComparePasswords_Success() {
+	match, err := suite.service.ComparePasswords(suite.ctx, suite.service.HashAndEncodeStringWithSalt(suite.ctx, "password", "salt"), "password", "salt")
+	assert.Nil(suite.T(), err)
+	assert.True(suite.T(), match)
+}
+
+func (suite *DoorkeeperServiceTestSuite) TestComparePasswords_Fail_Decode() {
+	match, err := suite.service.ComparePasswords(suite.ctx, "wrong padding", "password", "salt")
+	assert.Error(suite.T(), err)
+	assert.False(suite.T(), match)
+}
+
+func (suite *DoorkeeperServiceTestSuite) TestComparePasswords_Fail_Mismatch() {
+	match, err := suite.service.ComparePasswords(suite.ctx, suite.service.HashAndEncodeStringWithSalt(suite.ctx, "password", "salt"), "wrong", "salt")
+	assert.Nil(suite.T(), err)
+	assert.False(suite.T(), match)
 }
 
 func (suite *DoorkeeperServiceTestSuite) TestGenerateTokens_Success() {
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").
 		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), "prevJTI", "subject")
 
-	prevJTI := new(string)
-	*prevJTI = "prevJTI"
-
-	service := NewDoorkeeperService(suite.dk, suite.db)
-	token, err := service.GenerateTokens(suite.ctx, "subject", prevJTI)
+	token, err := suite.service.GenerateTokens(suite.ctx, "subject", nil)
 	assert.Nil(suite.T(), err)
 	assert.NotEmpty(suite.T(), token)
 }
 
 func (suite *DoorkeeperServiceTestSuite) TestGenerateTokens_Fail_Query() {
-	service := NewDoorkeeperService(suite.dk, suite.db)
-
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").WillReturnError(sql.ErrConnDone)
 
 	prevJTI := new(string)
 	*prevJTI = "prevJTI"
 
-	token, err := service.GenerateTokens(suite.ctx, "subject", prevJTI)
+	token, err := suite.service.GenerateTokens(suite.ctx, "subject", prevJTI)
 	assert.ErrorContains(suite.T(), err, sql.ErrConnDone.Error())
 	assert.Empty(suite.T(), token)
 }
@@ -97,20 +109,17 @@ func (suite *DoorkeeperServiceTestSuite) TestValidateAccessToken_Success() {
 	prevJTI := new(string)
 	*prevJTI = "prevJTI"
 
-	service := NewDoorkeeperService(suite.dk, suite.db)
-
 	// Generate access token
-	token, _ := service.GenerateTokens(suite.ctx, "subject", prevJTI)
+	token, _ := suite.service.GenerateTokens(suite.ctx, "subject", prevJTI)
 
 	// Test
-	userID, err := service.ValidateAccessToken(suite.ctx, token.AccessToken)
+	userID, err := suite.service.ValidateAccessToken(suite.ctx, token.AccessToken)
 	assert.Nil(suite.T(), err)
 	assert.Equal(suite.T(), "subject", userID)
 }
 
 func (suite *DoorkeeperServiceTestSuite) TestValidateAccessToken_Fail_Parse() {
-	service := NewDoorkeeperService(suite.dk, suite.db)
-	userID, err := service.ValidateAccessToken(suite.ctx, "some_random_string")
+	userID, err := suite.service.ValidateAccessToken(suite.ctx, "some_random_string")
 	assert.ErrorContains(suite.T(), err, "token is malformed")
 	assert.Empty(suite.T(), userID)
 }
@@ -126,22 +135,18 @@ func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Success() {
 	suite.mock.ExpectExec("INSERT INTO access_versionings (.+) VALUES (.+)").
 		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "user_id")
 
-	service := NewDoorkeeperService(suite.dk, suite.db)
-
 	// Generate refresh token
-	token, _ := service.GenerateTokens(suite.ctx, "user_id", nil)
+	token, _ := suite.service.GenerateTokens(suite.ctx, "user_id", nil)
 
 	// Test
-	token, err := service.ValidateRefreshToken(suite.ctx, token.RefreshToken)
+	token, err := suite.service.ValidateRefreshToken(suite.ctx, token.RefreshToken)
 	assert.Nil(suite.T(), err)
 	assert.NotEmpty(suite.T(), token)
 }
 
 func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Fail_Parse() {
-	service := NewDoorkeeperService(suite.dk, suite.db)
-
 	// Test
-	token, err := service.ValidateRefreshToken(suite.ctx, "some_random_string")
+	token, err := suite.service.ValidateRefreshToken(suite.ctx, "some_random_string")
 	assert.ErrorContains(suite.T(), err, "token is malformed")
 	assert.Empty(suite.T(), token)
 }
@@ -152,13 +157,12 @@ func (suite *DoorkeeperServiceTestSuite) TestValidateRefreshToken_Fail_QueryRow(
 		WillReturnResult(sqlmock.NewResult(1, 1)).WithArgs(sqlmock.AnyArg(), nil, "user_id")
 
 	suite.mock.ExpectQuery("SELECT av1.user_id FROM access_versionings av1 WHERE (.+)").WillReturnError(sql.ErrNoRows)
-	service := NewDoorkeeperService(suite.dk, suite.db)
 
 	// Generate refresh token
-	token, _ := service.GenerateTokens(suite.ctx, "user_id", nil)
+	token, _ := suite.service.GenerateTokens(suite.ctx, "user_id", nil)
 
 	// Test
-	token, err := service.ValidateRefreshToken(suite.ctx, token.RefreshToken)
+	token, err := suite.service.ValidateRefreshToken(suite.ctx, token.RefreshToken)
 	assert.ErrorContains(suite.T(), err, ErrTokenExpiredOrInvalidated.Error())
 	assert.Empty(suite.T(), token)
 }
