@@ -25,7 +25,7 @@ table users {
 
 table access_versionings {
   jti uuid [pk, default: `gen_random_uuid()`]
-  parent_id uuid [ref: - access_versionings.id, default: null]
+  parent_id uuid [ref: - access_versionings.jti, default: null]
   user_id uuid [ref: > users.id, not null]
   version integer
 }
