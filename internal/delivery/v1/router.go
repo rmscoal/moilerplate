@@ -4,6 +4,8 @@ import (
 	"embed"
 	"html/template"
 
+	_ "github.com/rmscoal/moilerplate/swagger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/rmscoal/moilerplate/internal/composer"
 	"github.com/rmscoal/moilerplate/internal/delivery/middleware"
@@ -22,6 +24,9 @@ func NewRouter(r *gin.Engine, ucComposer composer.IUseCaseComposer, svcComposer 
 
 	// API V1 - Parent of all endpoint for V1.
 	v1 := r.Group("/api/v1")
+
+	// Swagger
+	NewSwaggerController(v1)
 
 	// Credentials controller
 	NewCredentialController(v1, ucComposer.CredentialUseCase(), svcComposer.RaterService())
