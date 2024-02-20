@@ -4,8 +4,8 @@
 name: Codebase test
 
 on:
-  pull_request:
-    branches: ["dev"]
+  push:
+    branches: ["main"]
 
 jobs:
   unit-test:
