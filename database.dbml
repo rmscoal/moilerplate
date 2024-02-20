@@ -5,52 +5,27 @@ Docs: https://dbml.dbdiagram.io/docs
 
 table users {
   id uuid [pk, default: `gen_random_uuid()`]
-  first_name varchar(50) [not null]
-  last_name varchar(50) [not null]
-  phone_number varchar(25) [not null]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  indexes {
-    deleted_at [type: btree]
-    phone_number [unique, type: btree]
-  }
-}
-
-table user_emails {
-  id uuid [pk, default: `gen_random_uuid()`]
-  user_id uuid [ref: > users.id]
+  name varchar(150) [not null]
   email varchar(50) [not null]
-  is_primary boolean [default: false]
-  created_at timestamp
-  updated_at timestamp
-  deleted_at timestamp
-
-  indexes {
-    email [unique, type: btree]
-  }
-}
-
-table user_credentials {
-  id uuid [pk, default: `gen_random_uuid()`]
-  user_id uuid [ref: - users.id]
-  username varchar(25) [not null]
+  username varchar(20) [not null]
+  phone_number varchar(20) [not null]
   password varchar(255) [not null]
+
   created_at timestamp
   updated_at timestamp
   deleted_at timestamp
 
   indexes {
+    phone_number [unique, type: btree]
     username [unique, type: btree]
+    email [unique, type: btree]
+    deleted_at [type: btree]
   }
 }
 
-table authorization_credentials {
-  id uuid [pk, default: `gen_random_uuid()`]
-  version bigint [default: 1]
-  issued boolean [default: false]
-  parent_id uuid [ref: - authorization_credentials.id]
-  user_id uuid [ref: > users.id]
-  issued_at timestamp [default: `now()`]
+table access_versionings {
+  jti uuid [pk, default: `gen_random_uuid()`]
+  parent_id uuid [ref: - access_versionings.id, default: null]
+  user_id uuid [ref: > users.id, not null]
+  version integer
 }

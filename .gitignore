@@ -10,9 +10,6 @@ swagger.yaml
 # Log files
 logs/log.txt
 
-# Packages
-go.sum
-
 # air hot reload
 tmp
 

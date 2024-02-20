@@ -6,8 +6,11 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/google/uuid v1.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/mitchellh/cli v1.1.5
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.2
 	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v0.44.0
@@ -38,7 +41,6 @@ require (
 	github.com/go-openapi/spec v0.20.9 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/uuid v1.3.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
@@ -55,8 +57,6 @@ require (
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/gin-swagger v1.6.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	golang.org/x/tools v0.16.0 // indirect
