@@ -7,8 +7,8 @@ COPY . .
 
 RUN go mod tidy
 RUN go install github.com/swaggo/swag/cmd/swag@latest
-RUN swag init && swag fmt
-RUN CGO_ENABLED=0 GOOS=linux go build -o moilerplate-app
+RUN swag fmt && swag init -g ./cmd/app/main.go --output swagger --quiet
+RUN CGO_ENABLED=0 GOOS=linux go build -o moilerplate-app ./cmd/app/main.go
 
 # Stage 2: Create the final image
 FROM alpine:latest

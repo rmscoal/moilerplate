@@ -116,11 +116,11 @@ sum(http_server_request_count{job="collector"}) by (http_route)
 histogram_quantile(0.99, sum(rate(http_server_request_duration_bucket{job="collector"}[1d])) by (le, http_route))
 ```
 
-### Load Testing
-Inside the folder `testing/load_testing` there exists a k6 script load test files written in JavaScript that can be use to load test Moilerplate. Please read through [k6](https://k6.io/) documentation page on how to write and setup.
-For a simple try, assuming you have installed, you ma run
+### K6 Testing
+Inside the folder `testing/k6` there exists k6 scripts files written in JavaScript that can be use to do load test, e2e test and more for this service. Please read through [k6](https://k6.io/) documentation page on how to write and setup.
+For a simple try, assuming you have installed, you may run
 ```bash
-k6 run --vus 10 --duration 30s testing/load_testing/k6_user_test.js
+k6 run testing/k6/end_to_end_test.js
 ```
 
 ## Database Design

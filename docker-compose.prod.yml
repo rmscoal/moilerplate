@@ -22,10 +22,10 @@ services:
       - DB_MAX_OPEN_CONN=5
       - DB_MAX_CONN_LIFETIME=1m
       # Rate Limitting
-      - RATER_LIMIT=2
-      - BURST_LIMIT=2
-      - RATER_EVALUATION_INTERVAL=1m
-      - RATER_DELETION_TIME=3m
+      - RATER_LIMIT=5
+      - BURST_LIMIT=5
+      - RATER_EVALUATION_INTERVAL=30s
+      - RATER_DELETION_TIME=1m
       # Doorkeeper General
       - DOORKEEPER_GENERAL_HASH_METHOD=SHA384
       # Doorkeeper JWT
